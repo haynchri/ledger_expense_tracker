@@ -1,0 +1,39 @@
+{% extends "tracker/base.html" %}
+{% block title %}Import CSV{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Import Transactions</h1>
+  <a href="{% url 'transaction_list' %}" class="btn btn-ghost">← Back</a>
+</div>
+
+<div style="max-width:600px;">
+  <div class="card" style="margin-bottom:20px;">
+    <h2 style="font-family:var(--font-heading); font-size:1.1rem; margin-bottom:12px;">Upload CSV File</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Target Account *</label>
+        {{ form.account }}
+        <div class="form-help">{{ form.account.help_text }}</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">CSV File *</label>
+        {{ form.csv_file }}
+        <div class="form-help">{{ form.csv_file.help_text }}</div>
+      </div>
+      <button type="submit" class="btn btn-primary">Import Transactions</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 style="font-family:var(--font-heading); font-size:1.05rem; margin-bottom:10px;">📋 CSV Format Guide</h2>
+    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:12px;">Your CSV must include these columns (header row required):</p>
+    <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:14px; font-family:monospace; font-size:0.8rem; color:var(--text); white-space:pre; overflow-x:auto;">{{ sample_csv }}</div>
+    <div style="margin-top:12px; font-size:0.82rem; color:var(--muted);">
+      <strong style="color:var(--text);">Required columns:</strong> date (YYYY-MM-DD), type (income/expense), description, amount<br>
+      <strong style="color:var(--text);">Optional columns:</strong> category, notes
+    </div>
+  </div>
+</div>
+{% endblock %}

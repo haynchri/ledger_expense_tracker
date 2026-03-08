@@ -1,0 +1,154 @@
+{% extends "tracker/base.html" %}
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Monthly Report</h1>
+</div>
+
+<!-- Month selector -->
+<div class="card" style="margin-bottom:20px;">
+  <form method="get" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+    <label class="form-label" style="margin:0;">Month:</label>
+    <select name="month" class="form-input" style="width:140px;">
+      {% for num, name in months %}
+      <option value="{{ num }}" {% if num == selected_month %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+    <select name="year" class="form-input" style="width:100px;">
+      {% for y in years %}
+      <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm">View</button>
+  </form>
+</div>
+
+<!-- Summary -->
+<div class="stats-grid" style="margin-bottom:24px;">
+  <div class="stat-card">
+    <div class="stat-label">Total Income</div>
+    <div class="stat-value green">+${{ income_total|floatformat:2 }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Expenses</div>
+    <div class="stat-value red">-${{ expense_total|floatformat:2 }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Net Savings</div>
+    <div class="stat-value {% if net >= 0 %}green{% else %}red{% endif %}">
+      {% if net >= 0 %}+{% endif %}${{ net|floatformat:2 }}
+    </div>
+  </div>
+</div>
+
+<div class="two-col" style="margin-bottom:24px;">
+  <!-- Doughnut chart -->
+  <div class="card">
+    <h2 style="font-family:var(--font-heading); font-size:1.1rem; margin-bottom:16px;">Spending by Category</h2>
+    {% if by_category %}
+    <div style="max-width:280px; margin:0 auto;">
+      <canvas id="donutChart"></canvas>
+    </div>
+    {% else %}
+    <div style="text-align:center; color:var(--muted); padding:40px 0;">No expense data for this month.</div>
+    {% endif %}
+  </div>
+
+  <!-- Category breakdown table -->
+  <div class="card">
+    <h2 style="font-family:var(--font-heading); font-size:1.1rem; margin-bottom:16px;">Category Breakdown</h2>
+    {% if by_category %}
+    {% for cat in by_category %}
+    <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border);">
+      <span style="font-size:1.1rem; width:24px;">{{ cat.category__icon|default:"💡" }}</span>
+      <div style="flex:1;">
+        <div style="font-size:0.88rem; font-weight:500;">{{ cat.category__name|default:"Uncategorized" }}</div>
+        <div style="height:4px; background:var(--surface2); border-radius:2px; margin-top:4px;">
+          <div style="height:4px; border-radius:2px; background:{{ cat.category__color|default:'#6B7280' }}; width:{% widthratio cat.total expense_total 100 %}%;"></div>
+        </div>
+      </div>
+      <div style="text-align:right; font-size:0.88rem;">
+        <div style="font-weight:600; color:var(--red);">${{ cat.total|floatformat:2 }}</div>
+        <div style="color:var(--muted); font-size:0.75rem;">{% widthratio cat.total expense_total 100 %}%</div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="color:var(--muted); padding:30px 0; text-align:center;">No expenses this month.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- By account -->
+<div class="card">
+  <h2 style="font-family:var(--font-heading); font-size:1.1rem; margin-bottom:16px;">Activity by Account</h2>
+  {% if by_account %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Account</th>
+          <th>Type</th>
+          <th style="text-align:right; color:var(--green);">Income</th>
+          <th style="text-align:right; color:var(--red);">Expenses</th>
+          <th style="text-align:right;">Net</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in by_account %}
+        <tr>
+          <td style="font-weight:500;">{{ row.account__name }}</td>
+          <td style="color:var(--muted); font-size:0.82rem;">{{ row.account__account_type|title }}</td>
+          <td style="text-align:right; color:var(--green);">+${{ row.income|default:0|floatformat:2 }}</td>
+          <td style="text-align:right; color:var(--red);">-${{ row.expense|default:0|floatformat:2 }}</td>
+          <td style="text-align:right; font-weight:600;">
+            {% with net_row=row.income|default:0 %}
+            ${{ net_row|floatformat:2 }}
+            {% endwith %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="color:var(--muted); padding:30px; text-align:center;">No data for this period.</div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chartData = {{ chart_data_json|safe }};
+{% if by_category %}
+const ctx = document.getElementById('donutChart').getContext('2d');
+new Chart(ctx, {
+  type: 'doughnut',
+  data: {
+    labels: chartData.categories,
+    datasets: [{
+      data: chartData.amounts,
+      backgroundColor: chartData.colors.map(c => c + 'cc'),
+      borderColor: chartData.colors,
+      borderWidth: 1,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { color: '#8b90b0', font: { family: 'DM Sans', size: 11 }, padding: 10 }
+      },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` $${ctx.parsed.toFixed(2)}`
+        }
+      }
+    }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

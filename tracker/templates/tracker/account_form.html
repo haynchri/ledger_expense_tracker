@@ -1,0 +1,55 @@
+{% extends "tracker/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ title }}</h1>
+  <a href="{% url 'account_list' %}" class="btn btn-ghost">← Back</a>
+</div>
+
+<div style="max-width:520px;">
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Account Name *</label>
+        {{ form.name }}
+      </div>
+      <div class="form-grid" style="margin-bottom:0;">
+        <div class="form-group">
+          <label class="form-label">Account Type *</label>
+          {{ form.account_type }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last 4 Digits</label>
+          {{ form.last_four }}
+        </div>
+      </div>
+      <div class="form-grid" style="margin-bottom:0;">
+        <div class="form-group">
+          <label class="form-label">Opening Balance ($)</label>
+          {{ form.balance }}
+        </div>
+        <div class="form-group" id="credit-limit-group">
+          <label class="form-label">Credit Limit ($)</label>
+          {{ form.credit_limit }}
+          <div class="form-help">Credit cards only</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Display Color</label>
+        {{ form.color }}
+      </div>
+      {% if form.errors %}
+      <div style="background:rgba(248,113,113,0.1); border:1px solid var(--red); border-radius:8px; padding:12px; margin-bottom:16px; font-size:0.85rem; color:var(--red);">
+        {% for field, errors in form.errors.items %}{% for error in errors %}<div>{{ field }}: {{ error }}</div>{% endfor %}{% endfor %}
+      </div>
+      {% endif %}
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <a href="{% url 'account_list' %}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary">{% if account %}Save Changes{% else %}Create Account{% endif %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

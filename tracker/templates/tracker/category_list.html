@@ -1,0 +1,53 @@
+{% extends "tracker/base.html" %}
+{% block title %}Categories{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Categories</h1>
+  <a href="{% url 'category_create' %}" class="btn btn-primary">+ Add Category</a>
+</div>
+
+{% if categories %}
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Type</th>
+          <th>Transactions</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cat in categories %}
+        <tr>
+          <td>
+            <span class="cat-pill" style="background:{{ cat.color }}22; color:{{ cat.color }};">
+              {{ cat.icon }} {{ cat.name }}
+            </span>
+          </td>
+          <td style="color:var(--muted); font-size:0.85rem;">{{ cat.get_category_type_display }}</td>
+          <td style="color:var(--muted); font-size:0.85rem;">{{ cat.transactions.count }}</td>
+          <td>
+            <div style="display:flex; gap:6px; justify-content:flex-end;">
+              <a href="{% url 'category_edit' cat.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+              <a href="{% url 'category_delete' cat.pk %}" class="btn btn-danger btn-sm">Delete</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">🏷️</div>
+      <p>No categories yet. Categories help you organize your spending.</p>
+      <a href="{% url 'category_create' %}" class="btn btn-primary">Add Category</a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

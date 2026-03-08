@@ -1,0 +1,69 @@
+{% extends "tracker/base.html" %}
+{% block title %}Accounts{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Accounts</h1>
+  <a href="{% url 'account_create' %}" class="btn btn-primary">+ Add Account</a>
+</div>
+
+{% if accounts %}
+<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:16px;">
+  {% for account in accounts %}
+  <div class="card" style="border-left: 3px solid {{ account.color }};">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+      <div>
+        <div style="font-family:var(--font-heading); font-size:1.15rem;">{{ account.name }}</div>
+        <div style="font-size:0.78rem; color:var(--muted); margin-top:2px;">
+          {{ account.get_account_type_display }}{% if account.last_four %} · ····{{ account.last_four }}{% endif %}
+        </div>
+      </div>
+      <div style="font-size:1.5rem;">
+        {% if account.account_type == 'credit_card' %}💳{% elif account.account_type == 'savings' %}🏦{% else %}🏧{% endif %}
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em;">Balance</div>
+      <div style="font-family:var(--font-heading); font-size:1.7rem; color:{% if account.balance >= 0 %}var(--green){% else %}var(--red){% endif %};">
+        ${{ account.balance|floatformat:2 }}
+      </div>
+    </div>
+
+    {% if account.available_credit %}
+    <div style="padding:8px 12px; background:var(--surface2); border-radius:8px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; font-size:0.82rem;">
+        <span style="color:var(--muted);">Credit Limit</span>
+        <span>${{ account.credit_limit|floatformat:2 }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:0.82rem; margin-top:4px;">
+        <span style="color:var(--muted);">Available Credit</span>
+        <span style="color:var(--green);">${{ account.available_credit|floatformat:2 }}</span>
+      </div>
+      <!-- Credit utilization bar -->
+      {% if account.credit_limit %}
+      <div style="margin-top:8px; height:4px; background:var(--border); border-radius:2px;">
+        <div style="height:4px; border-radius:2px; background:{% if account.available_credit < 0 %}var(--red){% else %}var(--accent){% endif %}; width:{% widthratio account.balance account.credit_limit 100 %}%;"></div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div style="display:flex; gap:8px;">
+      <a href="{% url 'account_detail' account.pk %}" class="btn btn-ghost btn-sm" style="flex:1; justify-content:center;">View</a>
+      <a href="{% url 'account_edit' account.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+      <a href="{% url 'account_delete' account.pk %}" class="btn btn-danger btn-sm">Delete</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">🏦</div>
+      <p>You haven't added any accounts yet.</p>
+      <a href="{% url 'account_create' %}" class="btn btn-primary">Add Your First Account</a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

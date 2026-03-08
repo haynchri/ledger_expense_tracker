@@ -1,0 +1,20 @@
+{% extends "tracker/base.html" %}
+{% block title %}Delete {{ type }}{% endblock %}
+
+{% block content %}
+<div style="max-width:480px; margin:60px auto;">
+  <div class="card" style="text-align:center; padding:40px;">
+    <div style="font-size:3rem; margin-bottom:16px;">⚠️</div>
+    <h2 style="font-family:var(--font-heading); font-size:1.4rem; margin-bottom:8px;">Delete {{ type }}?</h2>
+    <p style="color:var(--muted); margin-bottom:24px;">
+      Are you sure you want to delete <strong style="color:var(--text);">{{ obj }}</strong>?
+      This action cannot be undone.
+    </p>
+    <form method="post" style="display:flex; gap:10px; justify-content:center;">
+      {% csrf_token %}
+      <a href="javascript:history.back()" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-danger">Yes, Delete</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

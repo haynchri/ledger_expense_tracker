@@ -1,0 +1,130 @@
+{% extends "tracker/base.html" %}
+{% block title %}Transactions{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Transactions</h1>
+  <div style="display:flex; gap:10px;">
+    <a href="{% url 'csv_export' %}?{{ request.GET.urlencode }}" class="btn btn-ghost">📤 Export</a>
+    <a href="{% url 'transaction_create' %}" class="btn btn-primary">+ Add Transaction</a>
+  </div>
+</div>
+
+<!-- Summary bar -->
+<div class="stats-grid" style="margin-bottom:20px;">
+  <div class="stat-card card-sm">
+    <div class="stat-label">Income (filtered)</div>
+    <div class="stat-value green" style="font-size:1.4rem;">+${{ total_income|floatformat:2 }}</div>
+  </div>
+  <div class="stat-card card-sm">
+    <div class="stat-label">Expenses (filtered)</div>
+    <div class="stat-value red" style="font-size:1.4rem;">-${{ total_expense|floatformat:2 }}</div>
+  </div>
+  <div class="stat-card card-sm">
+    <div class="stat-label">Net</div>
+    <div class="stat-value {% if net >= 0 %}green{% else %}red{% endif %}" style="font-size:1.4rem;">
+      {% if net >= 0 %}+{% endif %}${{ net|floatformat:2 }}
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:20px;">
+  <form method="get">
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:12px; align-items:end;">
+      <div>
+        <label class="form-label">Account</label>
+        {{ filter_form.account }}
+      </div>
+      <div>
+        <label class="form-label">Category</label>
+        {{ filter_form.category }}
+      </div>
+      <div>
+        <label class="form-label">Type</label>
+        {{ filter_form.transaction_type }}
+      </div>
+      <div>
+        <label class="form-label">From</label>
+        {{ filter_form.date_from }}
+      </div>
+      <div>
+        <label class="form-label">To</label>
+        {{ filter_form.date_to }}
+      </div>
+      <div>
+        <label class="form-label">Search</label>
+        {{ filter_form.search }}
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button type="submit" class="btn btn-primary btn-sm" style="flex:1;">Filter</button>
+        <a href="{% url 'transaction_list' %}" class="btn btn-ghost btn-sm">Clear</a>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Table -->
+<div class="card">
+  {% if transactions %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Account</th>
+          <th>Category</th>
+          <th>Type</th>
+          <th style="text-align:right;">Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for txn in transactions %}
+        <tr>
+          <td style="color:var(--muted); font-size:0.82rem; white-space:nowrap;">{{ txn.date }}</td>
+          <td>
+            <div style="font-weight:500;">{{ txn.description }}</div>
+            {% if txn.notes %}<div style="font-size:0.75rem; color:var(--muted);">{{ txn.notes|truncatechars:40 }}</div>{% endif %}
+            {% if txn.is_recurring %}<span style="font-size:0.68rem; color:var(--accent-light);">🔁 Recurring</span>{% endif %}
+          </td>
+          <td>
+            <span style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem;">
+              <span class="account-dot" style="background:{{ txn.account.color }};"></span>
+              {{ txn.account.name }}
+            </span>
+          </td>
+          <td>
+            {% if txn.category %}
+            <span class="cat-pill" style="background:{{ txn.category.color }}22; color:{{ txn.category.color }};">
+              {{ txn.category.icon }} {{ txn.category.name }}
+            </span>
+            {% else %}<span style="color:var(--muted);">—</span>{% endif %}
+          </td>
+          <td><span class="badge badge-{{ txn.transaction_type }}">{{ txn.get_transaction_type_display }}</span></td>
+          <td style="text-align:right; font-weight:600;">
+            <span class="{% if txn.transaction_type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
+              {% if txn.transaction_type == 'income' %}+{% else %}−{% endif %}${{ txn.amount|floatformat:2 }}
+            </span>
+          </td>
+          <td>
+            <div style="display:flex; gap:6px; justify-content:flex-end;">
+              <a href="{% url 'transaction_edit' txn.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+              <a href="{% url 'transaction_delete' txn.pk %}" class="btn btn-danger btn-sm">Del</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">💳</div>
+      <p>No transactions match your filters.</p>
+      <a href="{% url 'transaction_create' %}" class="btn btn-primary">Add Transaction</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

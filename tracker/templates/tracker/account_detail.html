@@ -1,0 +1,98 @@
+{% extends "tracker/base.html" %}
+{% block title %}{{ account.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div style="display:flex; align-items:center; gap:14px;">
+    <div style="width:48px; height:48px; border-radius:12px; background:{{ account.color }}22; border:2px solid {{ account.color }}66; display:flex; align-items:center; justify-content:center; font-size:1.4rem;">
+      {% if account.account_type == 'credit_card' %}💳{% elif account.account_type == 'savings' %}🏦{% else %}🏧{% endif %}
+    </div>
+    <div>
+      <h1 class="page-title" style="margin-bottom:2px;">{{ account.name }}</h1>
+      <div style="font-size:0.82rem; color:var(--muted);">{{ account.get_account_type_display }}{% if account.last_four %} · ····{{ account.last_four }}{% endif %}</div>
+    </div>
+  </div>
+  <div style="display:flex; gap:10px;">
+    <a href="{% url 'account_edit' account.pk %}" class="btn btn-ghost">Edit</a>
+    <a href="{% url 'transaction_create' %}" class="btn btn-primary">+ Add Transaction</a>
+  </div>
+</div>
+
+<div class="stats-grid" style="margin-bottom:24px;">
+  <div class="stat-card">
+    <div class="stat-label">Balance</div>
+    <div class="stat-value {% if account.balance >= 0 %}green{% else %}red{% endif %}">
+      ${{ account.balance|floatformat:2 }}
+    </div>
+  </div>
+  {% if account.available_credit %}
+  <div class="stat-card">
+    <div class="stat-label">Credit Limit</div>
+    <div class="stat-value accent">${{ account.credit_limit|floatformat:2 }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Available Credit</div>
+    <div class="stat-value {% if account.available_credit > 0 %}green{% else %}red{% endif %}">
+      ${{ account.available_credit|floatformat:2 }}
+    </div>
+  </div>
+  {% endif %}
+  <div class="stat-card">
+    <div class="stat-label">Total Transactions</div>
+    <div class="stat-value accent">{{ transactions.count }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2 style="font-family:var(--font-heading); font-size:1.1rem; margin-bottom:16px;">All Transactions</h2>
+  {% if transactions %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Type</th>
+          <th style="text-align:right;">Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for txn in transactions %}
+        <tr>
+          <td style="color:var(--muted); font-size:0.82rem;">{{ txn.date }}</td>
+          <td>{{ txn.description }}</td>
+          <td>
+            {% if txn.category %}
+            <span class="cat-pill" style="background:{{ txn.category.color }}22; color:{{ txn.category.color }};">
+              {{ txn.category.icon }} {{ txn.category.name }}
+            </span>
+            {% else %}<span style="color:var(--muted);">—</span>{% endif %}
+          </td>
+          <td><span class="badge badge-{{ txn.transaction_type }}">{{ txn.get_transaction_type_display }}</span></td>
+          <td style="text-align:right; font-weight:600;">
+            <span class="{% if txn.transaction_type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
+              {% if txn.transaction_type == 'income' %}+{% else %}−{% endif %}${{ txn.amount|floatformat:2 }}
+            </span>
+          </td>
+          <td>
+            <div style="display:flex; gap:6px; justify-content:flex-end;">
+              <a href="{% url 'transaction_edit' txn.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+              <a href="{% url 'transaction_delete' txn.pk %}" class="btn btn-danger btn-sm">Del</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">💳</div>
+      <p>No transactions for this account yet.</p>
+      <a href="{% url 'transaction_create' %}" class="btn btn-primary">Add Transaction</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "tracker/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ title }}</h1>
+  <a href="{% url 'transaction_list' %}" class="btn btn-ghost">← Back</a>
+</div>
+
+<div style="max-width:640px;">
+  <div class="card">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="form-grid" style="margin-bottom:0;">
+        <div class="form-group">
+          <label class="form-label">Type *</label>
+          {{ form.transaction_type }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account *</label>
+          {{ form.account }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description *</label>
+        {{ form.description }}
+      </div>
+
+      <div class="form-grid" style="margin-bottom:0;">
+        <div class="form-group">
+          <label class="form-label">Amount ($) *</label>
+          {{ form.amount }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date *</label>
+          {{ form.date }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        {{ form.category }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        {{ form.notes }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Receipt / Attachment</label>
+        {{ form.receipt }}
+        <div class="form-help">Upload a photo or PDF of the receipt (optional).</div>
+        {% if form.instance.receipt %}
+        <div style="margin-top:6px; font-size:0.8rem; color:var(--accent-light);">
+          Current: <a href="{{ form.instance.receipt.url }}" target="_blank">{{ form.instance.receipt.name }}</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+        {{ form.is_recurring }}
+        <label style="font-size:0.88rem; cursor:pointer;">This is a recurring transaction</label>
+      </div>
+
+      {% if form.errors %}
+      <div style="background:rgba(248,113,113,0.1); border:1px solid var(--red); border-radius:8px; padding:12px; margin-bottom:16px; font-size:0.85rem; color:var(--red);">
+        {% for field, errors in form.errors.items %}
+          {% for error in errors %}<div>{{ field }}: {{ error }}</div>{% endfor %}
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+        <a href="{% url 'transaction_list' %}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          {% if txn %}Save Changes{% else %}Add Transaction{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
