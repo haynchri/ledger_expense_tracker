@@ -347,61 +347,192 @@ def csv_export(request):
 
 @login_required
 def csv_import(request):
+    """Step 1 — choose account and upload the CSV file."""
+    from .forms import CSVUploadForm
     if request.method == 'POST':
-        form = CSVImportForm(request.user, request.POST, request.FILES)
+        form = CSVUploadForm(request.user, request.POST, request.FILES)
         if form.is_valid():
-            account = form.cleaned_data['account']
             csv_file = form.cleaned_data['csv_file']
-            decoded = csv_file.read().decode('utf-8')
-            reader = csv.DictReader(io.StringIO(decoded))
+            account  = form.cleaned_data['account']
+            try:
+                raw = csv_file.read().decode('utf-8-sig')
+            except UnicodeDecodeError:
+                csv_file.seek(0)
+                raw = csv_file.read().decode('latin-1')
 
-            created, errors = 0, []
+            reader  = csv.DictReader(io.StringIO(raw))
+            headers = reader.fieldnames or []
+            if not headers:
+                form.add_error('csv_file', 'Could not detect any column headers in this file.')
+                return render(request, 'tracker/csv_import.html', {'form': form})
+
+            preview_rows = []
+            for i, row in enumerate(reader):
+                if i >= 5:
+                    break
+                preview_rows.append([row.get(h, '') for h in headers])
+
+            request.session['csv_import'] = {
+                'account_id': account.pk,
+                'raw':        raw,
+                'headers':    headers,
+            }
+            from .forms import CSVMappingForm
+            from .forms import DB_FIELDS
+            return render(request, 'tracker/csv_map.html', {
+                'mapping_form': CSVMappingForm(headers),
+                'headers':      headers,
+                'preview_rows': preview_rows,
+                'account':      account,
+                'db_fields':    DB_FIELDS,
+            })
+    else:
+        form = CSVUploadForm(request.user)
+
+    return render(request, 'tracker/csv_import.html', {'form': form})
+
+
+@login_required
+def csv_import_map(request):
+    """Step 2 — map CSV columns to DB fields and execute the import."""
+    from .forms import CSVMappingForm, DB_FIELDS, _SKIP_CHOICE
+
+    session_data = request.session.get('csv_import')
+    if not session_data:
+        messages.warning(request, 'Import session expired — please start again.')
+        return redirect('csv_import')
+
+    headers    = session_data['headers']
+    raw        = session_data['raw']
+    account_id = session_data['account_id']
+    account    = get_object_or_404(Account, pk=account_id, user=request.user)
+
+    if request.method == 'POST':
+        mapping_form = CSVMappingForm(headers, request.POST)
+        if mapping_form.is_valid():
+            cd           = mapping_form.cleaned_data
+            type_default = cd.get('type_default', '')
+            amount_sign  = cd.get('amount_sign', 'positive')
+
+            col_map = {}
+            for key, _, _ in DB_FIELDS:
+                val = cd.get(f'map_{key}', _SKIP_CHOICE)
+                col_map[key] = None if val == _SKIP_CHOICE else val
+
+            reader              = csv.DictReader(io.StringIO(raw))
+            created, skipped, errors = 0, 0, []
+
             for i, row in enumerate(reader, start=2):
                 try:
-                    txn_type = row.get('type', '').strip().lower()
-                    if txn_type not in ('income', 'expense'):
-                        errors.append(f"Row {i}: invalid type '{txn_type}'")
-                        continue
+                    raw_amt = row.get(col_map['amount'], '0').strip()
+                    raw_amt = raw_amt.replace(',', '').replace('$', '').replace('£', '').replace('€', '')
+                    amount  = Decimal(raw_amt)
 
-                    amount = Decimal(row.get('amount', '0').strip().replace(',', ''))
+                    if type_default:
+                        txn_type = type_default
+                    elif amount_sign == 'signed':
+                        txn_type = 'income' if amount >= 0 else 'expense'
+                        amount   = abs(amount)
+                    else:
+                        type_col = col_map.get('transaction_type')
+                        raw_type = row.get(type_col, '').strip().lower() if type_col else ''
+                        synonyms_expense = ('debit', 'dr', 'withdrawal', 'purchase', 'expense')
+                        synonyms_income  = ('credit', 'cr', 'deposit', 'income', 'payment')
+                        if raw_type in synonyms_expense:
+                            txn_type = 'expense'
+                        elif raw_type in synonyms_income:
+                            txn_type = 'income'
+                        else:
+                            errors.append(f'Row {i}: unrecognised type "{raw_type}" — skipped')
+                            skipped += 1
+                            continue
+
                     if amount <= 0:
-                        errors.append(f"Row {i}: amount must be positive")
+                        errors.append(f'Row {i}: amount must be > 0 — skipped')
+                        skipped += 1
                         continue
 
-                    cat_name = row.get('category', '').strip()
+                    date_col    = col_map.get('date')
+                    raw_date    = row.get(date_col, '').strip() if date_col else ''
+                    parsed_date = _parse_date(raw_date) if raw_date else date.today()
+                    if parsed_date is None:
+                        errors.append(f'Row {i}: could not parse date "{raw_date}" — skipped')
+                        skipped += 1
+                        continue
+
+                    desc_col    = col_map.get('description')
+                    description = row.get(desc_col, '').strip() if desc_col else ''
+                    description = description or 'Imported'
+
                     category = None
-                    if cat_name:
-                        category, _ = Category.objects.get_or_create(
-                            user=request.user, name=cat_name,
-                            defaults={'category_type': 'both'}
-                        )
+                    cat_col  = col_map.get('category')
+                    if cat_col:
+                        cat_name = row.get(cat_col, '').strip()
+                        if cat_name:
+                            category, _ = Category.objects.get_or_create(
+                                user=request.user, name=cat_name,
+                                defaults={'category_type': 'both'}
+                            )
+
+                    notes    = ''
+                    note_col = col_map.get('notes')
+                    if note_col:
+                        notes = row.get(note_col, '').strip()
 
                     Transaction.objects.create(
                         user=request.user,
                         account=account,
                         transaction_type=txn_type,
                         amount=amount,
-                        description=row.get('description', '').strip() or 'Imported',
-                        date=row.get('date', str(date.today())).strip(),
-                        notes=row.get('notes', '').strip(),
+                        description=description,
+                        date=parsed_date,
+                        notes=notes,
                         category=category,
                     )
                     created += 1
-                except (InvalidOperation, ValueError, KeyError) as e:
-                    errors.append(f"Row {i}: {e}")
+
+                except (InvalidOperation, ValueError) as e:
+                    errors.append(f'Row {i}: {e} — skipped')
+                    skipped += 1
+
+            del request.session['csv_import']
 
             if created:
-                messages.success(request, f'Successfully imported {created} transactions.')
-            if errors:
-                for err in errors[:5]:
-                    messages.warning(request, err)
+                messages.success(request, f'Imported {created} transaction{"s" if created != 1 else ""}.')
+            if skipped:
+                messages.warning(request, f'{skipped} row{"s" if skipped != 1 else ""} skipped.')
+            for err in errors[:8]:
+                messages.warning(request, err)
+
             return redirect('transaction_list')
-    else:
-        form = CSVImportForm(request.user)
 
-    sample_csv = "date,type,account,category,description,amount,notes\n2024-01-15,expense,,Food & Dining,Grocery run,85.50,Weekly shop\n2024-01-16,income,,Salary,Paycheck,3000.00,"
-    return render(request, 'tracker/csv_import.html', {'form': form, 'sample_csv': sample_csv})
+        # Re-render with errors
+        preview_rows = []
+        for i, row in enumerate(csv.DictReader(io.StringIO(raw))):
+            if i >= 5: break
+            preview_rows.append([row.get(h, '') for h in headers])
 
+        return render(request, 'tracker/csv_map.html', {
+            'mapping_form': mapping_form,
+            'headers':      headers,
+            'preview_rows': preview_rows,
+            'account':      account,
+            'db_fields':    DB_FIELDS,
+        })
+
+    return redirect('csv_import')
+
+
+def _parse_date(raw):
+    import re
+    from datetime import datetime
+    raw = re.split(r'[\sT]', raw.strip())[0]
+    for fmt in ('%Y-%m-%d','%m/%d/%Y','%d/%m/%Y','%m-%d-%Y','%d-%m-%Y','%Y/%m/%d','%d.%m.%Y','%m.%d.%Y'):
+        try:
+            return datetime.strptime(raw, fmt).date()
+        except ValueError:
+            continue
+    return None
 
 # ── Reports ───────────────────────────────────────────────────────────────────
 

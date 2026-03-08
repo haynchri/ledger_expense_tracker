@@ -26,6 +26,7 @@ urlpatterns = [
 
     # CSV
     path('import/', views.csv_import, name='csv_import'),
+    path('import/map/', views.csv_import_map, name='csv_import_map'),
     path('export/', views.csv_export, name='csv_export'),
 
     # Reports

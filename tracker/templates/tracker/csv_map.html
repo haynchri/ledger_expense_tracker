@@ -1,0 +1,288 @@
+{% extends "tracker/base.html" %}
+{% load tracker_extras %}
+{% block title %}Map CSV Columns{% endblock %}
+
+{% block extra_css %}
+<style>
+  .step-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 28px;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .step.done .step-num { background: var(--green); color: #fff; }
+  .step.active .step-num { background: var(--accent); color: #fff; }
+  .step-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .step-line {
+    flex: 1; height: 1px; background: var(--border); min-width: 32px; margin: 0 6px;
+  }
+
+  .map-grid {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    gap: 0;
+    align-items: center;
+  }
+
+  .field-label {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px 0 0 8px;
+    padding: 10px 14px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+  }
+  .field-label .required-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .field-label .optional-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .arrow-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    color: var(--accent);
+    font-size: 1rem;
+  }
+
+  .map-select-wrap select.form-input {
+    border-radius: 0 8px 8px 0;
+    border-left: none;
+    height: 42px;
+    margin: 0;
+  }
+  .map-select-wrap select.form-input:focus {
+    border-left: 1px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+  }
+
+  .map-row {
+    margin-bottom: 10px;
+  }
+  .map-row-error .field-label,
+  .map-row-error .arrow-col,
+  .map-row-error .map-select-wrap select {
+    border-color: var(--red) !important;
+  }
+  .map-row-err-msg {
+    font-size: 0.75rem;
+    color: var(--red);
+    margin-top: 3px;
+    padding-left: 2px;
+  }
+
+  .preview-table {
+    font-size: 0.78rem;
+    width: 100%;
+    border-collapse: collapse;
+    overflow-x: auto;
+    display: block;
+    white-space: nowrap;
+  }
+  .preview-table th {
+    background: var(--surface2);
+    padding: 7px 12px;
+    font-size: 0.7rem;
+    color: var(--accent-light);
+  }
+  .preview-table td {
+    padding: 6px 12px;
+    color: var(--muted);
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+
+  .section-heading {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    margin-bottom: 14px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .option-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .option-card .form-label { margin-bottom: 6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Step bar -->
+<div class="step-bar">
+  <div class="step done">
+    <div class="step-num">✓</div>
+    <span>Upload File</span>
+  </div>
+  <div class="step-line"></div>
+  <div class="step active">
+    <div class="step-num">2</div>
+    <span>Map Columns</span>
+  </div>
+  <div class="step-line"></div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <span>Done</span>
+  </div>
+</div>
+
+<div class="page-header" style="margin-bottom:18px;">
+  <h1 class="page-title">Map Your CSV Columns</h1>
+  <a href="{% url 'csv_import' %}" class="btn btn-ghost">← Start Over</a>
+</div>
+
+<p style="color:var(--muted); font-size:0.88rem; margin-bottom:22px;">
+  Importing into <strong style="color:var(--accent-light);">{{ account.name }}</strong>.
+  Match each required field on the left to the column in your file on the right.
+  Auto-detected matches are pre-filled — just review and confirm.
+</p>
+
+<div style="display:grid; grid-template-columns: 1fr 420px; gap:24px; align-items:start;">
+
+  <!-- LEFT: mapping form -->
+  <div>
+    <form method="post" action="{% url 'csv_import_map' %}">
+      {% csrf_token %}
+
+      <!-- Import options -->
+      <div class="section-heading">⚙️ Import Options</div>
+      <div class="options-grid">
+        <div class="option-card">
+          <label class="form-label">{{ mapping_form.type_default.label }}</label>
+          {{ mapping_form.type_default }}
+          <div class="form-help" style="margin-top:5px;">Only needed if your CSV has no type column.</div>
+        </div>
+        <div class="option-card">
+          <label class="form-label">{{ mapping_form.amount_sign.label }}</label>
+          {{ mapping_form.amount_sign }}
+          <div class="form-help" style="margin-top:5px;">For bank exports that use negative amounts for debits.</div>
+        </div>
+      </div>
+
+      <!-- Column mapping -->
+      <div class="section-heading">🗂 Column Mapping</div>
+
+      <div class="legend">
+        <span><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent);"></span> Required</span>
+        <span><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--muted);"></span> Optional</span>
+      </div>
+
+      {% for key, label, required in db_fields %}
+      {% with field=mapping_form|get_field:key %}
+      <div class="map-row {% if field.errors %}map-row-error{% endif %}">
+        <div class="map-grid">
+          <div class="field-label">
+            {% if required %}<span class="required-dot"></span>{% else %}<span class="optional-dot"></span>{% endif %}
+            {{ label }}
+          </div>
+          <div class="arrow-col">→</div>
+          <div class="map-select-wrap">
+            {{ mapping_form|get_field_widget:key }}
+          </div>
+        </div>
+        {% if field.errors %}
+          {% for err in field.errors %}
+          <div class="map-row-err-msg">⚠ {{ err }}</div>
+          {% endfor %}
+        {% endif %}
+      </div>
+      {% endwith %}
+      {% endfor %}
+
+      <div style="display:flex; gap:12px; margin-top:24px;">
+        <a href="{% url 'csv_import' %}" class="btn btn-ghost">← Back</a>
+        <button type="submit" class="btn btn-primary" style="flex:1; justify-content:center;">
+          ✓ Confirm &amp; Import Transactions
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- RIGHT: preview panel -->
+  <div>
+    <div class="card" style="padding:18px;">
+      <div class="section-heading" style="margin-bottom:10px;">👁 File Preview <span style="font-size:0.75rem; color:var(--muted); font-family:var(--font-body); font-weight:400;">(first 5 rows)</span></div>
+      {% if preview_rows %}
+      <div style="overflow-x:auto;">
+        <table class="preview-table">
+          <thead>
+            <tr>
+              {% for h in headers %}<th>{{ h }}</th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in preview_rows %}
+            <tr>{% for cell in row %}<td title="{{ cell }}">{{ cell|truncatechars:22 }}</td>{% endfor %}</tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p style="color:var(--muted); font-size:0.85rem;">No preview data available.</p>
+      {% endif %}
+    </div>
+
+    <div class="card" style="margin-top:16px; padding:18px;">
+      <div class="section-heading" style="margin-bottom:10px;">📋 Detected Columns</div>
+      <div style="display:flex; flex-wrap:wrap; gap:7px;">
+        {% for h in headers %}
+        <span style="background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:3px 10px; font-size:0.78rem; color:var(--accent-light); font-family:monospace;">{{ h }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

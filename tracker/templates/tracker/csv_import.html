@@ -1,39 +1,93 @@
 {% extends "tracker/base.html" %}
 {% block title %}Import CSV{% endblock %}
 
+{% block extra_css %}
+<style>
+  .step-bar { display:flex; align-items:center; gap:0; margin-bottom:28px; }
+  .step { display:flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:600; color:var(--muted); }
+  .step.active .step-num { background:var(--accent); color:#fff; }
+  .step-num { width:26px; height:26px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700; flex-shrink:0; }
+  .step-line { flex:1; height:1px; background:var(--border); min-width:32px; margin:0 6px; }
+  .upload-zone { border:2px dashed var(--border); border-radius:12px; padding:40px 24px; text-align:center; cursor:pointer; transition:border-color .2s,background .2s; position:relative; }
+  .upload-zone:hover,.upload-zone.dragover { border-color:var(--accent); background:rgba(124,106,247,.04); }
+  .upload-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .upload-icon { font-size:2.5rem; margin-bottom:12px; }
+  .upload-label { font-size:.95rem; font-weight:600; color:var(--text); margin-bottom:4px; }
+  .upload-hint { font-size:.82rem; color:var(--muted); }
+  .file-chosen { font-size:.85rem; color:var(--accent-light); margin-top:10px; font-weight:500; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="page-header">
-  <h1 class="page-title">Import Transactions</h1>
-  <a href="{% url 'transaction_list' %}" class="btn btn-ghost">← Back</a>
+<div class="step-bar">
+  <div class="step active"><div class="step-num">1</div><span>Upload File</span></div>
+  <div class="step-line"></div>
+  <div class="step"><div class="step-num">2</div><span>Map Columns</span></div>
+  <div class="step-line"></div>
+  <div class="step"><div class="step-num">3</div><span>Done</span></div>
 </div>
 
-<div style="max-width:600px;">
-  <div class="card" style="margin-bottom:20px;">
-    <h2 style="font-family:var(--font-heading); font-size:1.1rem; margin-bottom:12px;">Upload CSV File</h2>
+<div class="page-header" style="margin-bottom:18px;">
+  <h1 class="page-title">Import Transactions</h1>
+  <a href="{% url 'transaction_list' %}" class="btn btn-ghost">← Cancel</a>
+</div>
+
+<p style="color:var(--muted); font-size:.88rem; margin-bottom:24px;">
+  Upload any CSV file — you'll map your column headers to the right fields on the next screen.
+  Works with bank exports, spreadsheet exports, or any custom format.
+</p>
+
+<div style="max-width:560px;">
+  <div class="card">
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <div class="form-group">
         <label class="form-label">Target Account *</label>
         {{ form.account }}
-        <div class="form-help">{{ form.account.help_text }}</div>
+        {% if form.account.errors %}<div style="color:var(--red);font-size:.8rem;margin-top:4px;">{{ form.account.errors.0 }}</div>{% endif %}
       </div>
       <div class="form-group">
         <label class="form-label">CSV File *</label>
-        {{ form.csv_file }}
-        <div class="form-help">{{ form.csv_file.help_text }}</div>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" name="csv_file" accept=".csv" id="csv-file-input">
+          <div class="upload-icon">📂</div>
+          <div class="upload-label">Click to browse or drag &amp; drop</div>
+          <div class="upload-hint">Supports .csv files · Any column layout accepted</div>
+          <div class="file-chosen" id="file-chosen" style="display:none;"></div>
+        </div>
+        {% if form.csv_file.errors %}<div style="color:var(--red);font-size:.8rem;margin-top:4px;">{{ form.csv_file.errors.0 }}</div>{% endif %}
       </div>
-      <button type="submit" class="btn btn-primary">Import Transactions</button>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;">
+        Next: Map Columns →
+      </button>
     </form>
   </div>
 
-  <div class="card">
-    <h2 style="font-family:var(--font-heading); font-size:1.05rem; margin-bottom:10px;">📋 CSV Format Guide</h2>
-    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:12px;">Your CSV must include these columns (header row required):</p>
-    <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:14px; font-family:monospace; font-size:0.8rem; color:var(--text); white-space:pre; overflow-x:auto;">{{ sample_csv }}</div>
-    <div style="margin-top:12px; font-size:0.82rem; color:var(--muted);">
-      <strong style="color:var(--text);">Required columns:</strong> date (YYYY-MM-DD), type (income/expense), description, amount<br>
-      <strong style="color:var(--text);">Optional columns:</strong> category, notes
+  <div class="card" style="margin-top:16px;padding:18px;">
+    <div style="font-family:var(--font-heading);font-size:1rem;margin-bottom:10px;">💡 Tips</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;gap:8px;font-size:.83rem;color:var(--muted);"><span style="color:var(--green);flex-shrink:0;">✓</span> Your CSV must have a <strong style="color:var(--text);">header row</strong> in the first row.</div>
+      <div style="display:flex;gap:8px;font-size:.83rem;color:var(--muted);"><span style="color:var(--green);flex-shrink:0;">✓</span> Common names like <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;color:var(--accent-light);">Date</code>, <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;color:var(--accent-light);">Description</code>, <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;color:var(--accent-light);">Amount</code> will be auto-detected.</div>
+      <div style="display:flex;gap:8px;font-size:.83rem;color:var(--muted);"><span style="color:var(--green);flex-shrink:0;">✓</span> Bank exports with negative amounts are supported via the signed amount option.</div>
+      <div style="display:flex;gap:8px;font-size:.83rem;color:var(--muted);"><span style="color:var(--green);flex-shrink:0;">✓</span> Categories will be <strong style="color:var(--text);">auto-created</strong> if they don't exist yet.</div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const input = document.getElementById('csv-file-input');
+const zone  = document.getElementById('upload-zone');
+const label = document.getElementById('file-chosen');
+input.addEventListener('change', () => {
+  if (input.files.length) { label.textContent = '📄 ' + input.files[0].name; label.style.display = 'block'; zone.style.borderColor = 'var(--accent)'; }
+});
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; label.textContent = '📄 ' + e.dataTransfer.files[0].name; label.style.display = 'block'; zone.style.borderColor = 'var(--accent)'; }
+});
+</script>
 {% endblock %}
