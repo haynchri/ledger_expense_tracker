@@ -410,9 +410,7 @@ def csv_import_map(request):
     if request.method == 'POST':
         mapping_form = CSVMappingForm(headers, request.POST)
         if mapping_form.is_valid():
-            cd           = mapping_form.cleaned_data
-            type_default = cd.get('type_default', '')
-            amount_sign  = cd.get('amount_sign', 'positive')
+            cd      = mapping_form.cleaned_data
 
             col_map = {}
             for key, _, _ in DB_FIELDS:
@@ -428,29 +426,13 @@ def csv_import_map(request):
                     raw_amt = raw_amt.replace(',', '').replace('$', '').replace('£', '').replace('€', '')
                     amount  = Decimal(raw_amt)
 
-                    if type_default:
-                        txn_type = type_default
-                    elif amount_sign == 'signed':
-                        txn_type = 'income' if amount >= 0 else 'expense'
-                        amount   = abs(amount)
-                    else:
-                        type_col = col_map.get('transaction_type')
-                        raw_type = row.get(type_col, '').strip().lower() if type_col else ''
-                        synonyms_expense = ('debit', 'dr', 'withdrawal', 'purchase', 'expense')
-                        synonyms_income  = ('credit', 'cr', 'deposit', 'income', 'payment')
-                        if raw_type in synonyms_expense:
-                            txn_type = 'expense'
-                        elif raw_type in synonyms_income:
-                            txn_type = 'income'
-                        else:
-                            errors.append(f'Row {i}: unrecognised type "{raw_type}" — skipped')
-                            skipped += 1
-                            continue
-
-                    if amount <= 0:
-                        errors.append(f'Row {i}: amount must be > 0 — skipped')
+                    # Derive type from sign: positive = income, negative = expense
+                    if amount == 0:
+                        errors.append(f'Row {i}: amount is zero — skipped')
                         skipped += 1
                         continue
+                    txn_type = 'income' if amount > 0 else 'expense'
+                    amount   = abs(amount)
 
                     date_col    = col_map.get('date')
                     raw_date    = row.get(date_col, '').strip() if date_col else ''

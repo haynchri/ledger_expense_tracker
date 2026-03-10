@@ -125,55 +125,36 @@ class CSVUploadForm(forms.Form):
 
 
 # DB fields we need to map to: (key, label, required)
+# transaction_type is intentionally excluded — it is derived from amount sign.
 DB_FIELDS = [
-    ('date',             'Date',                  True),
-    ('description',      'Description',           True),
-    ('amount',           'Amount',                True),
-    ('transaction_type', 'Type (income/expense)', True),
-    ('category',         'Category',              False),
-    ('notes',            'Notes',                 False),
+    ('date',        'Date',        True),
+    ('description', 'Description', True),
+    ('amount',      'Amount',      True),
+    ('category',    'Category',    False),
+    ('notes',       'Notes',       False),
 ]
 
 _SKIP_CHOICE = '__skip__'
 
 
 class CSVMappingForm(forms.Form):
-    """Step 2 — map each DB field to a CSV column header."""
-
-    type_default = forms.ChoiceField(
-        choices=[('', '— use mapped column —'),
-                 ('expense', 'All rows = Expense'),
-                 ('income',  'All rows = Income')],
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-input'}),
-        label='Default type (if not in file)',
-    )
-
-    amount_sign = forms.ChoiceField(
-        choices=[
-            ('positive', 'Amounts are always positive (use Type column)'),
-            ('signed',   'Negative = expense, positive = income (ignore Type column)'),
-        ],
-        required=False,
-        initial='positive',
-        widget=forms.Select(attrs={'class': 'form-input'}),
-        label='Amount sign convention',
-    )
+    """Step 2 — map each DB field to a CSV column header.
+    Transaction type is determined automatically from the amount sign:
+    positive → income, negative → expense.
+    """
 
     def __init__(self, csv_headers, *args, **kwargs):
         super().__init__(*args, **kwargs)
         skip_choices = [(_SKIP_CHOICE, '— skip / not in file —')]
         choices = skip_choices + [(h, h) for h in csv_headers]
 
-        # Auto-match heuristics
         lower_map = {h.lower(): h for h in csv_headers}
         auto_candidates = {
-            'date':             ['date', 'trans date', 'transaction date', 'posted date', 'post date'],
-            'description':      ['description', 'desc', 'memo', 'narrative', 'details', 'payee', 'merchant'],
-            'amount':           ['amount', 'amt', 'debit', 'credit', 'value', 'transaction amount'],
-            'transaction_type': ['type', 'transaction type', 'txn type', 'kind'],
-            'category':         ['category', 'cat', 'label', 'tag'],
-            'notes':            ['notes', 'note', 'comment', 'comments', 'reference', 'ref'],
+            'date':        ['date', 'trans date', 'transaction date', 'posted date', 'post date'],
+            'description': ['description', 'desc', 'memo', 'narrative', 'details', 'payee', 'merchant'],
+            'amount':      ['amount', 'amt', 'debit', 'credit', 'value', 'transaction amount'],
+            'category':    ['category', 'cat', 'label', 'tag'],
+            'notes':       ['notes', 'note', 'comment', 'comments', 'reference', 'ref'],
         }
 
         for key, label, _ in DB_FIELDS:
@@ -192,11 +173,8 @@ class CSVMappingForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
-        type_default = cleaned.get('type_default', '')
         for key, _, required in DB_FIELDS:
             val = cleaned.get(f'map_{key}', _SKIP_CHOICE)
-            if key == 'transaction_type' and type_default:
-                continue  # covered by default
             if required and (not val or val == _SKIP_CHOICE):
                 self.add_error(f'map_{key}', 'Required — please map this to a column.')
         return cleaned
