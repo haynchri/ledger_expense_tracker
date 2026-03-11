@@ -240,6 +240,7 @@ def category_delete(request, pk):
 
 @login_required
 def transaction_list(request):
+    from django.core.paginator import Paginator
     qs = Transaction.objects.filter(user=request.user).select_related('account', 'category')
     filter_form = TransactionFilterForm(request.user, request.GET)
 
@@ -258,15 +259,39 @@ def transaction_list(request):
         if d.get('search'):
             qs = qs.filter(description__icontains=d['search'])
 
+    # Totals apply to the full filtered set, not just the current page
     total_income = qs.filter(transaction_type='income').aggregate(t=Sum('amount'))['t'] or 0
     total_expense = qs.filter(transaction_type='expense').aggregate(t=Sum('amount'))['t'] or 0
 
+    # Pagination — default 25 rows, user can override with ?per_page=
+    try:
+        per_page = int(request.GET.get('per_page', 25))
+        per_page = per_page if per_page in (10, 25, 50, 100) else 25
+    except (ValueError, TypeError):
+        per_page = 25
+
+    paginator = Paginator(qs, per_page)
+    page_num  = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page_num)
+    except Exception:
+        page_obj = paginator.page(1)
+
+    # Build a query string that preserves all filters but strips 'page'
+    get_copy = request.GET.copy()
+    get_copy.pop('page', None)
+    filter_qs = get_copy.urlencode()
+
     return render(request, 'tracker/transaction_list.html', {
-        'transactions': qs,
-        'filter_form': filter_form,
-        'total_income': total_income,
+        'transactions':  page_obj,
+        'page_obj':      page_obj,
+        'paginator':     paginator,
+        'filter_qs':     filter_qs,
+        'per_page':      per_page,
+        'filter_form':   filter_form,
+        'total_income':  total_income,
         'total_expense': total_expense,
-        'net': total_income - total_expense,
+        'net':           total_income - total_expense,
     })
 
 

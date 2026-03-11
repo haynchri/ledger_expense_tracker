@@ -1,5 +1,73 @@
 {% extends "tracker/base.html" %}
+{% load tracker_extras %}
 {% block title %}Transactions{% endblock %}
+
+{% block extra_css %}
+<style>
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .pagination-info {
+    font-size: 0.82rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .pagination-info strong { color: var(--text); }
+  .page-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 8px;
+    border-radius: 7px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.12s;
+    cursor: pointer;
+  }
+  .page-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+  .page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .page-btn.disabled { opacity: 0.35; pointer-events: none; }
+  .page-ellipsis { color: var(--muted); font-size: 0.82rem; padding: 0 4px; }
+
+  .per-page-select {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .per-page-select select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: var(--text);
+    font-size: 0.8rem;
+    font-family: var(--font-body);
+    cursor: pointer;
+  }
+  .per-page-select select:focus { outline: none; border-color: var(--accent); }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -65,7 +133,7 @@
 </div>
 
 <!-- Table -->
-<div class="card">
+<div class="card" style="padding:0; overflow:hidden;">
   {% if transactions %}
   <div class="table-wrap">
     <table>
@@ -119,6 +187,87 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Pagination bar -->
+  <div class="pagination">
+
+    <!-- Left: record info -->
+    <div class="pagination-info">
+      Showing
+      <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+      of
+      <strong>{{ paginator.count }}</strong>
+      transaction{{ paginator.count|pluralize }}
+    </div>
+
+    <!-- Centre: page buttons -->
+    <div class="page-links">
+
+      {# Previous #}
+      {% if page_obj.has_previous %}
+        <a href="?{{ filter_qs }}&page={{ page_obj.previous_page_number }}&per_page={{ per_page }}" class="page-btn" title="Previous">‹</a>
+      {% else %}
+        <span class="page-btn disabled">‹</span>
+      {% endif %}
+
+      {# Page numbers with ellipsis #}
+      {% with current=page_obj.number total=paginator.num_pages %}
+        {% if total <= 7 %}
+          {% for p in paginator.page_range %}
+            <a href="?{{ filter_qs }}&page={{ p }}&per_page={{ per_page }}"
+               class="page-btn {% if p == current %}active{% endif %}">{{ p }}</a>
+          {% endfor %}
+        {% else %}
+          {# Always show first page #}
+          <a href="?{{ filter_qs }}&page=1&per_page={{ per_page }}"
+             class="page-btn {% if current == 1 %}active{% endif %}">1</a>
+
+          {% if current > 3 %}<span class="page-ellipsis">…</span>{% endif %}
+
+          {# Pages around current #}
+          {% for p in paginator.page_range %}
+            {% if p > 1 and p < total %}
+              {% if p >= current|add:"-1" and p <= current|add:"1" %}
+                <a href="?{{ filter_qs }}&page={{ p }}&per_page={{ per_page }}"
+                   class="page-btn {% if p == current %}active{% endif %}">{{ p }}</a>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+
+          {% if current < total|add:"-2" %}<span class="page-ellipsis">…</span>{% endif %}
+
+          {# Always show last page #}
+          <a href="?{{ filter_qs }}&page={{ total }}&per_page={{ per_page }}"
+             class="page-btn {% if current == total %}active{% endif %}">{{ total }}</a>
+        {% endif %}
+      {% endwith %}
+
+      {# Next #}
+      {% if page_obj.has_next %}
+        <a href="?{{ filter_qs }}&page={{ page_obj.next_page_number }}&per_page={{ per_page }}" class="page-btn" title="Next">›</a>
+      {% else %}
+        <span class="page-btn disabled">›</span>
+      {% endif %}
+
+    </div>
+
+    <!-- Right: rows per page -->
+    <div class="per-page-select">
+      <span>Rows per page</span>
+      <select onchange="
+        const url = new URL(window.location);
+        url.searchParams.set('per_page', this.value);
+        url.searchParams.set('page', '1');
+        window.location = url.toString();
+      ">
+        {% comment %} {% for n in '10,25,50,100'|split:',' %}
+        <option value="{{ n }}" {% if n == per_page|stringformat:'s' %}selected{% endif %}>{{ n }}</option>
+        {% endfor %} {% endcomment %}
+      </select>
+    </div>
+
+  </div>
+
   {% else %}
     <div class="empty-state">
       <div class="empty-icon">💳</div>
