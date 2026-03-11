@@ -29,6 +29,13 @@ urlpatterns = [
     path('import/map/', views.csv_import_map, name='csv_import_map'),
     path('export/', views.csv_export, name='csv_export'),
 
+    # Category Rules
+    path('rules/', views.rule_list, name='rule_list'),
+    path('rules/new/', views.rule_create, name='rule_create'),
+    path('rules/<int:pk>/edit/', views.rule_edit, name='rule_edit'),
+    path('rules/<int:pk>/delete/', views.rule_delete, name='rule_delete'),
+    path('rules/apply/', views.rule_apply, name='rule_apply'),
+
     # Reports
     path('reports/', views.reports, name='reports'),
 ]

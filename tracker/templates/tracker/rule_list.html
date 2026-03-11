@@ -1,0 +1,240 @@
+{% extends "tracker/base.html" %}
+{% block title %}Category Rules{% endblock %}
+
+{% block extra_css %}
+<style>
+  .rule-row {
+    display: grid;
+    grid-template-columns: 1fr 120px 1fr 80px 60px 100px;
+    align-items: center;
+    gap: 0;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+  .rule-row:last-child { border-bottom: none; }
+  .rule-row:hover { background: var(--surface2); }
+
+  .rule-keyword {
+    font-family: monospace;
+    font-size: 0.88rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 9px;
+    color: var(--accent-light);
+    display: inline-block;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .match-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .hit-count {
+    font-size: 0.82rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .hit-count .num {
+    font-weight: 700;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+
+  .rule-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+  .inactive-row { opacity: 0.45; }
+
+  .apply-banner {
+    background: linear-gradient(135deg, rgba(124,106,247,0.12) 0%, rgba(52,211,153,0.08) 100%);
+    border: 1px solid rgba(124,106,247,0.3);
+    border-radius: 14px;
+    padding: 22px 26px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  .apply-banner-icon { font-size: 2.2rem; flex-shrink: 0; }
+  .apply-banner-text h3 {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    margin-bottom: 4px;
+  }
+  .apply-banner-text p { font-size: 0.85rem; color: var(--muted); }
+  .apply-banner-actions { margin-left: auto; flex-shrink: 0; }
+
+  .col-header {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr 120px 1fr 80px 60px 100px;
+    gap: 0;
+  }
+
+  .priority-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .how-it-works {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .how-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .how-card strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 0.85rem; }
+  .how-card code {
+    font-family: monospace;
+    background: var(--surface2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--accent-light);
+    font-size: 0.8rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Category Rules</h1>
+  <a href="{% url 'rule_create' %}" class="btn btn-primary">+ Add Rule</a>
+</div>
+
+<p style="color:var(--muted); font-size:0.88rem; margin-bottom:20px;">
+  Rules automatically assign categories to transactions based on their description.
+  Rules are checked in priority order — the first match wins.
+</p>
+
+<!-- Match type reference -->
+<div class="how-it-works">
+  <div class="how-card"><strong>Contains</strong> Description includes the keyword anywhere. <code>amazon</code> matches "AMAZON.COM PURCHASE"</div>
+  <div class="how-card"><strong>Starts with</strong> Description begins with the keyword. <code>UBER</code> matches "UBER EATS ORDER"</div>
+  <div class="how-card"><strong>Ends with</strong> Description ends with the keyword. <code>REFUND</code> matches "TARGET REFUND"</div>
+  <div class="how-card"><strong>Exact match</strong> Description is exactly the keyword (case-insensitive).</div>
+  <div class="how-card"><strong>Regex</strong> Full regular expression. <code>netflix|hulu|disney</code> matches any streaming service.</div>
+</div>
+
+<!-- Apply banner -->
+<div class="apply-banner">
+  <div class="apply-banner-icon">⚡</div>
+  <div class="apply-banner-text">
+    <h3>Apply Rules to All Transactions</h3>
+    <p>Scan all {{ total_transactions }} transaction{{ total_transactions|pluralize }} and update categories wherever a rule matches. Runs instantly.</p>
+  </div>
+  <div class="apply-banner-actions">
+    <form method="post" action="{% url 'rule_apply' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary" onclick="this.textContent='Running…'; this.disabled=true; this.form.submit();">
+        ⚡ Apply All Rules Now
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Rules table -->
+{% if rule_stats %}
+<div class="card" style="padding:0; overflow:hidden;">
+  <div class="col-header">
+    <span>Keyword</span>
+    <span>Match Type</span>
+    <span>→ Category</span>
+    <span>Matches</span>
+    <span>Priority</span>
+    <span></span>
+  </div>
+
+  {% for stat in rule_stats %}
+  <div class="rule-row {% if not stat.rule.is_active %}inactive-row{% endif %}">
+
+    <!-- Keyword -->
+    <div>
+      <span class="rule-keyword" title="{{ stat.rule.keyword }}">{{ stat.rule.keyword }}</span>
+      {% if not stat.rule.is_active %}
+        <span style="font-size:0.7rem; color:var(--muted); margin-left:6px;">inactive</span>
+      {% endif %}
+    </div>
+
+    <!-- Match type -->
+    <div>
+      <span class="match-badge">{{ stat.rule.get_match_type_display }}</span>
+    </div>
+
+    <!-- Category -->
+    <div>
+      <span class="cat-pill" style="background:{{ stat.rule.category.color }}22; color:{{ stat.rule.category.color }};">
+        {{ stat.rule.category.icon }} {{ stat.rule.category.name }}
+      </span>
+    </div>
+
+    <!-- Match count -->
+    <div class="hit-count">
+      <span class="num">{{ stat.match_count }}</span>
+      <span>txn{{ stat.match_count|pluralize }}</span>
+    </div>
+
+    <!-- Priority -->
+    <div>
+      <span class="priority-badge">{{ stat.rule.priority }}</span>
+    </div>
+
+    <!-- Actions -->
+    <div class="rule-actions">
+      <a href="{% url 'rule_edit' stat.rule.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+      <a href="{% url 'rule_delete' stat.rule.pk %}" class="btn btn-danger btn-sm">Del</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<p style="margin-top:12px; font-size:0.78rem; color:var(--muted);">
+  {{ rule_stats|length }} rule{{ rule_stats|length|pluralize }} · Inactive rules are dimmed and skipped when applying.
+</p>
+
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="empty-icon">🏷️</div>
+    <p>No rules yet. Add your first rule to start auto-categorising transactions.</p>
+    <a href="{% url 'rule_create' %}" class="btn btn-primary">Add First Rule</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

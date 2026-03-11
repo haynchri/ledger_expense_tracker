@@ -178,3 +178,24 @@ class CSVMappingForm(forms.Form):
             if required and (not val or val == _SKIP_CHOICE):
                 self.add_error(f'map_{key}', 'Required — please map this to a column.')
         return cleaned
+
+
+class CategoryRuleForm(forms.ModelForm):
+    class Meta:
+        from .models import CategoryRule
+        model  = CategoryRule
+        fields = ['keyword', 'match_type', 'category', 'priority', 'is_active']
+        widgets = {
+            'keyword':    forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'e.g. AMAZON, Netflix, Whole Foods'
+            }),
+            'match_type': forms.Select(attrs={'class': 'form-input'}),
+            'category':   forms.Select(attrs={'class': 'form-input'}),
+            'priority':   forms.NumberInput(attrs={'class': 'form-input', 'min': 1}),
+            'is_active':  forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        }
+
+    def __init__(self, user, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['category'].queryset = Category.objects.filter(user=user)

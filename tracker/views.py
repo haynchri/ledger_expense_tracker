@@ -479,8 +479,13 @@ def csv_import_map(request):
 
             del request.session['csv_import']
 
+            # Auto-apply category rules to the newly imported transactions
             if created:
+                from .models import apply_category_rules
+                rule_hits = apply_category_rules(request.user)
                 messages.success(request, f'Imported {created} transaction{"s" if created != 1 else ""}.')
+                if rule_hits:
+                    messages.success(request, f'Auto-categorised {rule_hits} transaction{"s" if rule_hits != 1 else ""} using your rules.')
             if skipped:
                 messages.warning(request, f'{skipped} row{"s" if skipped != 1 else ""} skipped.')
             for err in errors[:8]:
@@ -573,3 +578,99 @@ def reports(request):
         'years': range(today.year - 3, today.year + 1),
         'chart_data_json': json.dumps(chart_data),
     })
+
+# ── Category Rules ────────────────────────────────────────────────────────────
+
+@login_required
+def rule_list(request):
+    from .models import CategoryRule, apply_category_rules
+    rules = CategoryRule.objects.filter(user=request.user).select_related('category')
+
+    # Gather a preview: how many transactions each rule would match
+    all_txns = Transaction.objects.filter(user=request.user).only('description')
+    txn_descriptions = list(all_txns.values_list('description', flat=True))
+
+    rule_stats = []
+    for rule in rules:
+        count = sum(1 for desc in txn_descriptions if rule.matches(desc))
+        rule_stats.append({'rule': rule, 'match_count': count})
+
+    return render(request, 'tracker/rule_list.html', {
+        'rule_stats': rule_stats,
+        'total_transactions': len(txn_descriptions),
+    })
+
+
+@login_required
+def rule_create(request):
+    from .forms import CategoryRuleForm
+    # Pre-fill keyword if coming from a transaction description link
+    initial = {}
+    if desc := request.GET.get('description'):
+        initial['keyword'] = desc
+
+    if request.method == 'POST':
+        form = CategoryRuleForm(request.user, request.POST)
+        if form.is_valid():
+            rule = form.save(commit=False)
+            rule.user = request.user
+            rule.save()
+            messages.success(request, f'Rule created: "{rule.keyword}" → {rule.category}')
+            return redirect('rule_list')
+    else:
+        form = CategoryRuleForm(request.user, initial=initial)
+    descriptions = list(
+        Transaction.objects.filter(user=request.user)
+        .values_list('description', flat=True).distinct()[:500]
+    )
+    return render(request, 'tracker/rule_form.html', {
+        'form': form, 'title': 'Add Rule',
+        'descriptions_json': json.dumps(descriptions),
+    })
+
+
+@login_required
+def rule_edit(request, pk):
+    from .models import CategoryRule
+    from .forms import CategoryRuleForm
+    rule = get_object_or_404(CategoryRule, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = CategoryRuleForm(request.user, request.POST, instance=rule)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Rule updated.')
+            return redirect('rule_list')
+    else:
+        form = CategoryRuleForm(request.user, instance=rule)
+    descriptions = list(
+        Transaction.objects.filter(user=request.user)
+        .values_list('description', flat=True).distinct()[:500]
+    )
+    return render(request, 'tracker/rule_form.html', {
+        'form': form, 'title': 'Edit Rule', 'rule': rule,
+        'descriptions_json': json.dumps(descriptions),
+    })
+
+
+@login_required
+def rule_delete(request, pk):
+    from .models import CategoryRule
+    rule = get_object_or_404(CategoryRule, pk=pk, user=request.user)
+    if request.method == 'POST':
+        rule.delete()
+        messages.success(request, f'Rule "{rule.keyword}" deleted.')
+        return redirect('rule_list')
+    return render(request, 'tracker/confirm_delete.html', {'obj': rule, 'type': 'Rule'})
+
+
+@login_required
+def rule_apply(request):
+    """Apply all active rules to ALL transactions for this user."""
+    from .models import apply_category_rules
+    if request.method == 'POST':
+        updated = apply_category_rules(request.user)
+        if updated:
+            messages.success(request, f'Done! Updated {updated} transaction{"s" if updated != 1 else ""}.')
+        else:
+            messages.info(request, 'No transactions needed updating — all already matched.')
+    return redirect('rule_list')

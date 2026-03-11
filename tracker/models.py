@@ -118,3 +118,78 @@ class Transaction(models.Model):
         account = self.account
         super().delete(*args, **kwargs)
         account.recalculate_balance()
+
+
+class CategoryRule(models.Model):
+    """Maps a description keyword/pattern to a category.
+    Rules are evaluated in priority order (lower number = higher priority).
+    Matching is case-insensitive. Use match_type to control exact vs contains vs starts/ends.
+    """
+    MATCH_TYPES = [
+        ('contains',    'Contains'),
+        ('exact',       'Exact match'),
+        ('startswith',  'Starts with'),
+        ('endswith',    'Ends with'),
+        ('regex',       'Regex'),
+    ]
+
+    user      = models.ForeignKey(User, on_delete=models.CASCADE, related_name='category_rules')
+    keyword   = models.CharField(max_length=255, help_text='Text to match against the transaction description')
+    match_type = models.CharField(max_length=12, choices=MATCH_TYPES, default='contains')
+    category  = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='rules')
+    priority  = models.PositiveIntegerField(default=10, help_text='Lower number = evaluated first')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['priority', 'keyword']
+        unique_together = ['user', 'keyword', 'match_type']
+
+    def __str__(self):
+        return f'"{self.keyword}" ({self.get_match_type_display()}) → {self.category}'
+
+    def matches(self, description: str) -> bool:
+        """Return True if this rule matches the given description."""
+        import re
+        desc = description.lower()
+        kw   = self.keyword.lower()
+        if self.match_type == 'contains':
+            return kw in desc
+        if self.match_type == 'exact':
+            return desc == kw
+        if self.match_type == 'startswith':
+            return desc.startswith(kw)
+        if self.match_type == 'endswith':
+            return desc.endswith(kw)
+        if self.match_type == 'regex':
+            try:
+                return bool(re.search(self.keyword, description, re.IGNORECASE))
+            except re.error:
+                return False
+        return False
+
+
+def apply_category_rules(user, queryset=None):
+    """Apply all active CategoryRules for a user to a Transaction queryset.
+    Returns (updated_count, skipped_count).
+    If queryset is None, applies to ALL transactions for the user.
+    Only updates transactions whose category is currently unset.
+    """
+    rules = CategoryRule.objects.filter(
+        user=user, is_active=True
+    ).select_related('category').order_by('priority', 'keyword')
+
+    if queryset is None:
+        queryset = Transaction.objects.filter(user=user)
+
+    updated = 0
+    for txn in queryset.select_related('category'):
+        for rule in rules:
+            if rule.matches(txn.description):
+                if txn.category_id != rule.category_id:
+                    txn.category = rule.category
+                    Transaction.objects.filter(pk=txn.pk).update(category=rule.category)
+                    updated += 1
+                break  # first matching rule wins
+
+    return updated

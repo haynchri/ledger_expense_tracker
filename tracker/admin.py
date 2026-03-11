@@ -20,3 +20,11 @@ class TransactionAdmin(admin.ModelAdmin):
     list_display = ['description', 'amount', 'transaction_type', 'account', 'category', 'date', 'user']
     list_filter = ['transaction_type', 'date']
     search_fields = ['description', 'user__username']
+
+from .models import CategoryRule
+
+@admin.register(CategoryRule)
+class CategoryRuleAdmin(admin.ModelAdmin):
+    list_display = ['keyword', 'match_type', 'category', 'priority', 'is_active', 'user']
+    list_filter  = ['match_type', 'is_active']
+    search_fields = ['keyword']
