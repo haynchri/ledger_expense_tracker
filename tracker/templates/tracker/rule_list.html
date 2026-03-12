@@ -5,7 +5,7 @@
 <style>
   .rule-row {
     display: grid;
-    grid-template-columns: 1fr 120px 1fr 80px 60px 100px;
+    grid-template-columns: 1fr 120px 1fr 100px 80px 60px 100px;
     align-items: center;
     gap: 0;
     padding: 13px 16px;
@@ -89,7 +89,7 @@
     padding: 8px 16px;
     border-bottom: 1px solid var(--border);
     display: grid;
-    grid-template-columns: 1fr 120px 1fr 80px 60px 100px;
+    grid-template-columns: 1fr 120px 1fr 100px 80px 60px 100px;
     gap: 0;
   }
 
@@ -176,6 +176,7 @@
     <span>Keyword</span>
     <span>Match Type</span>
     <span>→ Category</span>
+    <span>Min Amount</span>
     <span>Matches</span>
     <span>Priority</span>
     <span></span>
@@ -202,6 +203,15 @@
       <span class="cat-pill" style="background:{{ stat.rule.category.color }}22; color:{{ stat.rule.category.color }};">
         {{ stat.rule.category.icon }} {{ stat.rule.category.name }}
       </span>
+    </div>
+
+    <!-- Min amount -->
+    <div>
+      {% if stat.rule.min_amount %}
+        <span style="font-size:0.82rem; color:var(--text); font-weight:600;">≥ ${{ stat.rule.min_amount|floatformat:2 }}</span>
+      {% else %}
+        <span style="font-size:0.78rem; color:var(--muted);">any</span>
+      {% endif %}
     </div>
 
     <!-- Match count -->

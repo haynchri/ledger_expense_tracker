@@ -137,6 +137,10 @@ class CategoryRule(models.Model):
     keyword   = models.CharField(max_length=255, help_text='Text to match against the transaction description')
     match_type = models.CharField(max_length=12, choices=MATCH_TYPES, default='contains')
     category  = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='rules')
+    min_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        help_text='Optional — only match transactions with amount ≥ this value'
+    )
     priority  = models.PositiveIntegerField(default=10, help_text='Lower number = evaluated first')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -148,9 +152,13 @@ class CategoryRule(models.Model):
     def __str__(self):
         return f'"{self.keyword}" ({self.get_match_type_display()}) → {self.category}'
 
-    def matches(self, description: str) -> bool:
-        """Return True if this rule matches the given description."""
+    def matches(self, description: str, amount=None) -> bool:
+        """Return True if this rule matches the given description (and amount, if set)."""
         import re
+        # Check amount threshold first — cheap early-exit
+        if self.min_amount is not None and amount is not None:
+            if amount < self.min_amount:
+                return False
         desc = description.lower()
         kw   = self.keyword.lower()
         if self.match_type == 'contains':
@@ -185,7 +193,7 @@ def apply_category_rules(user, queryset=None):
     updated = 0
     for txn in queryset.select_related('category'):
         for rule in rules:
-            if rule.matches(txn.description):
+            if rule.matches(txn.description, amount=txn.amount):
                 if txn.category_id != rule.category_id:
                     txn.category = rule.category
                     Transaction.objects.filter(pk=txn.pk).update(category=rule.category)

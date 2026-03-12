@@ -184,7 +184,7 @@ class CategoryRuleForm(forms.ModelForm):
     class Meta:
         from .models import CategoryRule
         model  = CategoryRule
-        fields = ['keyword', 'match_type', 'category', 'priority', 'is_active']
+        fields = ['keyword', 'match_type', 'category', 'min_amount', 'priority', 'is_active']
         widgets = {
             'keyword':    forms.TextInput(attrs={
                 'class': 'form-input',
@@ -192,6 +192,11 @@ class CategoryRuleForm(forms.ModelForm):
             }),
             'match_type': forms.Select(attrs={'class': 'form-input'}),
             'category':   forms.Select(attrs={'class': 'form-input'}),
+            'min_amount': forms.NumberInput(attrs={
+                'class': 'form-input',
+                'step': '0.01', 'min': '0',
+                'placeholder': 'e.g. 10.00 (leave blank to match any amount)',
+            }),
             'priority':   forms.NumberInput(attrs={'class': 'form-input', 'min': 1}),
             'is_active':  forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
         }

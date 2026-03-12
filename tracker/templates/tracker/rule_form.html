@@ -68,6 +68,13 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label class="form-label">Minimum Amount ($) <span style="color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0;">— optional</span></label>
+        {{ form.min_amount }}
+        <div class="form-help">Only match transactions with an amount at or above this value. Leave blank to match any amount.</div>
+        {% if form.min_amount.errors %}<div style="color:var(--red);font-size:.8rem;margin-top:3px;">{{ form.min_amount.errors.0 }}</div>{% endif %}
+      </div>
+
       <div class="form-grid" style="margin-bottom:0;">
         <div class="form-group">
           <label class="form-label">Priority</label>
