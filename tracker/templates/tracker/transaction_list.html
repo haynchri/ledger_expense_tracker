@@ -260,9 +260,9 @@
         url.searchParams.set('page', '1');
         window.location = url.toString();
       ">
-        {% comment %} {% for n in '10,25,50,100'|split:',' %}
+        {% for n in '10,25,50,100'|split:',' %}
         <option value="{{ n }}" {% if n == per_page|stringformat:'s' %}selected{% endif %}>{{ n }}</option>
-        {% endfor %} {% endcomment %}
+        {% endfor %}
       </select>
     </div>
 

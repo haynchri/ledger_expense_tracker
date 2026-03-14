@@ -1,0 +1,54 @@
+{% extends "tracker/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ title }}</h1>
+  <a href="{% url 'budget_list' %}" class="btn btn-ghost">← Back</a>
+</div>
+
+<div style="max-width: 480px;">
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">Category *</label>
+        {{ form.category }}
+        {% if form.category.errors %}<div style="color:var(--red);font-size:.8rem;margin-top:3px;">{{ form.category.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Monthly Target ($) *</label>
+        {{ form.amount }}
+        <div class="form-help">How much you expect to spend (or earn) in this category per month.</div>
+        {% if form.amount.errors %}<div style="color:var(--red);font-size:.8rem;margin-top:3px;">{{ form.amount.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Note <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">— optional</span></label>
+        {{ form.notes }}
+      </div>
+
+      {% if form.non_field_errors %}
+      <div style="background:rgba(248,113,113,0.1);border:1px solid var(--red);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.84rem;color:var(--red);">
+        {% for err in form.non_field_errors %}{{ err }}{% endfor %}
+      </div>
+      {% endif %}
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+        <a href="{% url 'budget_list' %}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary">{% if budget %}Save Changes{% else %}Create Budget{% endif %}</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card" style="margin-top:16px;padding:16px;">
+    <div style="font-family:var(--font-heading);font-size:.95rem;margin-bottom:8px;">💡 Tip</div>
+    <p style="font-size:.82rem;color:var(--muted);">
+      The budget type (income vs expense) is inferred from the category type.
+      Set the category type on the <a href="{% url 'category_list' %}" style="color:var(--accent-light);">Categories</a> page if needed.
+    </p>
+  </div>
+</div>
+{% endblock %}

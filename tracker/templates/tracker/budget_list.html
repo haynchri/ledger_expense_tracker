@@ -1,0 +1,151 @@
+{% extends "tracker/base.html" %}
+{% block title %}Budgets{% endblock %}
+
+{% block extra_css %}
+<style>
+  .budget-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .budget-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.15s;
+  }
+  .budget-card:hover { border-color: var(--accent); }
+  .budget-card.over-budget { border-color: rgba(248,113,113,0.5); }
+
+  .budget-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .budget-amounts {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    font-size: 0.82rem;
+  }
+  .budget-actual { font-weight: 700; font-size: 1.1rem; }
+  .budget-target { color: var(--muted); }
+
+  .progress-track {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  .budget-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+  }
+  .budget-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .status-ok   { color: var(--green); }
+  .status-warn { color: #fbbf24; }
+  .status-over { color: var(--red); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Budgets</h1>
+  <a href="{% url 'budget_create' %}" class="btn btn-primary">+ Add Budget</a>
+</div>
+
+<p style="color:var(--muted); font-size:0.88rem; margin-bottom:20px;">
+  Set monthly targets per category. Progress bars below show how much of each budget
+  has been used so far this month (<strong style="color:var(--text);">{{ month_label }}</strong>).
+  Budgets also feed into the <a href="{% url 'forecast' %}" style="color:var(--accent-light);">Forecast</a>.
+</p>
+
+{% if budget_rows %}
+<div class="budget-grid">
+  {% for row in budget_rows %}
+  <div class="budget-card {% if row.over %}over-budget{% endif %}">
+
+    <div class="budget-header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:40px; height:40px; border-radius:10px; background:{{ row.budget.category.color }}22; border:1px solid {{ row.budget.category.color }}44; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0;">
+          {{ row.budget.category.icon }}
+        </div>
+        <div>
+          <div style="font-weight:600; font-size:0.95rem;">{{ row.budget.category.name }}</div>
+          <div style="font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;">
+            {{ row.txn_type }}{% if row.budget.notes %} · {{ row.budget.notes }}{% endif %}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <a href="{% url 'budget_edit' row.budget.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+        <a href="{% url 'budget_delete' row.budget.pk %}" class="btn btn-danger btn-sm">Del</a>
+      </div>
+    </div>
+
+    <div class="budget-amounts">
+      <span class="budget-actual" style="color:{% if row.over %}var(--red){% elif row.pct >= 80 %}#fbbf24{% else %}var(--text){% endif %};">
+        ${{ row.actual|floatformat:2 }}
+      </span>
+      <span class="budget-target">of ${{ row.budget.amount|floatformat:2 }}</span>
+    </div>
+
+    <div class="progress-track">
+      <div class="progress-fill" style="
+        width: {{ row.pct }}%;
+        background: {% if row.over %}var(--red){% elif row.pct >= 80 %}#fbbf24{% else %}{{ row.budget.category.color }}{% endif %};
+      "></div>
+    </div>
+
+    <div class="budget-footer">
+      <div>
+        {% if row.over %}
+          <span class="budget-status status-over">
+            ⚠ ${{ row.actual|floatformat:2 }} over budget
+          </span>
+        {% elif row.pct >= 80 %}
+          <span class="budget-status status-warn">
+            ${{ row.budget.amount|floatformat:2 }} remaining
+          </span>
+        {% else %}
+          {% with remaining=row.budget.amount|floatformat:2 %}
+          <span class="budget-status status-ok">
+            On track · {{ row.pct }}% used
+          </span>
+          {% endwith %}
+        {% endif %}
+      </div>
+      <span style="font-size:0.75rem; color:var(--muted);">{{ row.pct }}%</span>
+    </div>
+
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="empty-icon">🎯</div>
+    <p>No budgets yet. Set monthly targets to track your spending and power the forecast.</p>
+    <a href="{% url 'budget_create' %}" class="btn btn-primary">Add First Budget</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

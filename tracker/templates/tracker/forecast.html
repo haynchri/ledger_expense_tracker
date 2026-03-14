@@ -1,0 +1,414 @@
+{% extends "tracker/base.html" %}
+{% load tracker_extras %}
+{% block title %}Forecast{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Month tabs */
+  .month-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .month-tab {
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-body);
+    transition: all 0.12s;
+  }
+  .month-tab:hover  { border-color: var(--accent); color: var(--text); background: var(--surface2); }
+  .month-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Month panel */
+  .month-panel { display: none; }
+  .month-panel.active { display: block; }
+
+  /* Summary strip */
+  .forecast-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .strip-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .strip-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; }
+  .strip-value { font-family: var(--font-heading); font-size: 1.5rem; }
+
+  /* Category breakdown table */
+  .breakdown-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .breakdown-table th {
+    text-align: left; padding: 9px 14px;
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); border-bottom: 1px solid var(--border);
+  }
+  .breakdown-table th.right, .breakdown-table td.right { text-align: right; }
+  .breakdown-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .breakdown-table tr:last-child td { border-bottom: none; }
+  .breakdown-table tr:hover td { background: var(--surface2); }
+
+  /* Budget vs projected bar */
+  .mini-bar-track { height: 4px; background: var(--surface2); border-radius: 2px; margin-top: 4px; min-width: 80px; }
+  .mini-bar-fill  { height: 4px; border-radius: 2px; }
+
+  /* Variance chip */
+  .variance-chip {
+    display: inline-flex; align-items: center;
+    padding: 2px 7px; border-radius: 5px; font-size: 0.72rem; font-weight: 600;
+  }
+  .variance-over  { background: rgba(248,113,113,0.15); color: var(--red); }
+  .variance-under { background: rgba(52,211,153,0.12);  color: var(--green); }
+  .variance-exact { background: var(--surface2); color: var(--muted); }
+
+  /* Section divider */
+  .section-divider {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--muted);
+    padding: 8px 14px; background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .horizon-btns { display: flex; gap: 6px; }
+
+  /* Running balance chip */
+  .balance-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 8px;
+    font-size: 0.82rem; font-weight: 600;
+    border: 1px solid var(--border);
+  }
+  .balance-positive { color: var(--green); border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.07); }
+  .balance-negative { color: var(--red);   border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.07); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Forecast</h1>
+  <div class="horizon-btns">
+    {% for n in '3,6,12,24'|split:',' %}
+    <a href="?months={{ n }}"
+       class="btn {% if n == months_ahead|stringformat:'s' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">
+      {{ n }}mo
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<p style="color:var(--muted); font-size:0.88rem; margin-bottom:20px;">
+  Projected using your <strong style="color:var(--text);">recurring transactions</strong> and
+  <strong style="color:var(--text);">monthly budgets</strong>.
+  Where both exist, the larger value is used (conservative estimate).
+  Set recurring transactions on the <a href="{% url 'transaction_list' %}" style="color:var(--accent-light);">Transactions</a> page
+  and budgets on the <a href="{% url 'budget_list' %}" style="color:var(--accent-light);">Budgets</a> page.
+</p>
+
+{% if not has_data %}
+<div class="card">
+  <div class="empty-state">
+    <div class="empty-icon">🔮</div>
+    <p>No recurring transactions or budgets found. Add some to generate a forecast.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <a href="{% url 'budget_create' %}" class="btn btn-primary">Add Budget</a>
+      <a href="{% url 'transaction_create' %}" class="btn btn-ghost">Add Recurring Transaction</a>
+    </div>
+  </div>
+</div>
+{% else %}
+
+<!-- Overview chart -->
+<div class="card" style="margin-bottom:24px; padding:22px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+    <h2 style="font-family:var(--font-heading); font-size:1.1rem;">{{ months_ahead }}-Month Overview</h2>
+    <div style="display:flex; gap:16px; font-size:0.78rem; color:var(--muted);">
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:3px;background:var(--green);display:inline-block;border-radius:2px;"></span> Income</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:3px;background:var(--red);display:inline-block;border-radius:2px;"></span> Expenses</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:3px;background:var(--accent-light);display:inline-block;border-radius:2px;border-style:dashed;"></span> Balance</span>
+    </div>
+  </div>
+  <canvas id="forecastChart" height="90"></canvas>
+</div>
+
+<!-- Month tabs -->
+<div class="month-tabs" id="month-tabs">
+  {% for fm in forecast_months %}
+  <button class="month-tab {% if forloop.first %}active{% endif %}"
+          data-panel="panel-{{ forloop.counter }}">
+    {{ fm.label }}
+    {% if fm.projected_net >= 0 %}
+      <span style="color:var(--green); margin-left:4px;">+</span>
+    {% else %}
+      <span style="color:var(--red); margin-left:4px;">−</span>
+    {% endif %}
+  </button>
+  {% endfor %}
+</div>
+
+<!-- Month panels -->
+{% for fm in forecast_months %}
+<div class="month-panel {% if forloop.first %}active{% endif %}" id="panel-{{ forloop.counter }}">
+
+  <!-- Summary strip -->
+  <div class="forecast-strip">
+    <div class="strip-card">
+      <div class="strip-label">Projected Income</div>
+      <div class="strip-value green">+${{ fm.projected_income|floatformat:2 }}</div>
+      {% if fm.budget_income %}
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:3px;">Budget: ${{ fm.budget_income|floatformat:2 }}</div>
+      {% endif %}
+    </div>
+    <div class="strip-card">
+      <div class="strip-label">Projected Expenses</div>
+      <div class="strip-value red">-${{ fm.projected_expense|floatformat:2 }}</div>
+      {% if fm.budget_expense %}
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:3px;">Budget: ${{ fm.budget_expense|floatformat:2 }}</div>
+      {% endif %}
+    </div>
+    <div class="strip-card">
+      <div class="strip-label">Projected Net</div>
+      <div class="strip-value {% if fm.projected_net >= 0 %}green{% else %}red{% endif %}">
+        {% if fm.projected_net >= 0 %}+{% endif %}${{ fm.projected_net|floatformat:2 }}
+      </div>
+    </div>
+    <div class="strip-card">
+      <div class="strip-label">Running Balance</div>
+      <div class="strip-value {% if fm.running_balance >= 0 %}accent{% else %}red{% endif %}">
+        ${{ fm.running_balance|floatformat:2 }}
+      </div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:3px;">end of {{ fm.label }}</div>
+    </div>
+  </div>
+
+  <!-- Category breakdown -->
+  <div class="card" style="padding:0;overflow:hidden;">
+
+    {% if fm.income_rows %}
+    <div class="section-divider">📈 Income</div>
+    <table class="breakdown-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th class="right">Recurring</th>
+          <th class="right">Budget</th>
+          <th class="right">Projected</th>
+          <th class="right">vs Budget</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in fm.income_rows %}
+        <tr>
+          <td>
+            <span class="cat-pill" style="background:{{ row.category_color }}22;color:{{ row.category_color }};">
+              {{ row.category_icon }} {{ row.category_name }}
+            </span>
+          </td>
+          <td class="right" style="color:var(--muted);">
+            {% if row.recurring_amount %}${{ row.recurring_amount|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="right" style="color:var(--muted);">
+            {% if row.budget_amount %}${{ row.budget_amount|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="right">
+            <strong class="amount-income">+${{ row.projected_amount|floatformat:2 }}</strong>
+            {% if row.has_budget %}
+            <div class="mini-bar-track">
+              <div class="mini-bar-fill" style="
+                width:{% widthratio row.projected_amount row.budget_amount 100 %}%;
+                background:{{ row.category_color }};
+              "></div>
+            </div>
+            {% endif %}
+          </td>
+          <td class="right">
+            {% if row.variance is not None %}
+              {% if row.variance > 0 %}
+                <span class="variance-chip variance-under">+${{ row.variance|floatformat:2 }}</span>
+              {% elif row.variance < 0 %}
+                <span class="variance-chip variance-over">-${{ row.variance|abs_value|floatformat:2 }}</span>
+              {% else %}
+                <span class="variance-chip variance-exact">On target</span>
+              {% endif %}
+            {% else %}
+              <span style="color:var(--muted);font-size:0.78rem;">no budget</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        <tr style="background:var(--surface2);">
+          <td colspan="3" style="font-weight:600;font-size:0.82rem;color:var(--muted);">Total Income</td>
+          <td class="right"><strong class="amount-income">+${{ fm.projected_income|floatformat:2 }}</strong></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+    {% endif %}
+
+    {% if fm.expense_rows %}
+    <div class="section-divider">📉 Expenses</div>
+    <table class="breakdown-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th class="right">Recurring</th>
+          <th class="right">Budget</th>
+          <th class="right">Projected</th>
+          <th class="right">vs Budget</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in fm.expense_rows %}
+        <tr>
+          <td>
+            <span class="cat-pill" style="background:{{ row.category_color }}22;color:{{ row.category_color }};">
+              {{ row.category_icon }} {{ row.category_name }}
+            </span>
+          </td>
+          <td class="right" style="color:var(--muted);">
+            {% if row.recurring_amount %}${{ row.recurring_amount|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="right" style="color:var(--muted);">
+            {% if row.budget_amount %}${{ row.budget_amount|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="right">
+            <strong class="amount-expense">-${{ row.projected_amount|floatformat:2 }}</strong>
+            {% if row.has_budget %}
+            <div class="mini-bar-track">
+              <div class="mini-bar-fill" style="
+                width:{% widthratio row.projected_amount row.budget_amount 100 %}%;
+                background:{% if row.projected_amount > row.budget_amount %}var(--red){% else %}{{ row.category_color }}{% endif %};
+              "></div>
+            </div>
+            {% endif %}
+          </td>
+          <td class="right">
+            {% if row.variance is not None %}
+              {% if row.variance > 0 %}
+                <span class="variance-chip variance-over">+${{ row.variance|floatformat:2 }} over</span>
+              {% elif row.variance < 0 %}
+                <span class="variance-chip variance-under">${{ row.variance|abs_value|floatformat:2 }} under</span>
+              {% else %}
+                <span class="variance-chip variance-exact">On target</span>
+              {% endif %}
+            {% else %}
+              <span style="color:var(--muted);font-size:0.78rem;">no budget</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        <tr style="background:var(--surface2);">
+          <td colspan="3" style="font-weight:600;font-size:0.82rem;color:var(--muted);">Total Expenses</td>
+          <td class="right"><strong class="amount-expense">-${{ fm.projected_expense|floatformat:2 }}</strong></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Net row -->
+    <div style="padding:14px 16px; display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border-top:1px solid var(--border);">
+      <span style="font-weight:700; font-size:0.88rem;">Projected Net · {{ fm.label }}</span>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span class="balance-chip {% if fm.running_balance >= 0 %}balance-positive{% else %}balance-negative{% endif %}">
+          🏦 Running balance: ${{ fm.running_balance|floatformat:2 }}
+        </span>
+        <span style="font-family:var(--font-heading); font-size:1.2rem; {% if fm.projected_net >= 0 %}color:var(--green){% else %}color:var(--red){% endif %};">
+          {% if fm.projected_net >= 0 %}+{% endif %}${{ fm.projected_net|floatformat:2 }}
+        </span>
+      </div>
+    </div>
+
+  </div><!-- /card -->
+</div><!-- /month-panel -->
+{% endfor %}
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if has_data %}
+<script>
+const cd = {{ chart_data_json|safe }};
+
+// Grouped bar chart for income/expense + line for running balance
+const ctx = document.getElementById('forecastChart').getContext('2d');
+new Chart(ctx, {
+  data: {
+    labels: cd.labels,
+    datasets: [
+      {
+        type: 'bar',
+        label: 'Income',
+        data: cd.income,
+        backgroundColor: 'rgba(52,211,153,0.45)',
+        borderColor: '#34d399',
+        borderWidth: 1,
+        borderRadius: 4,
+        yAxisID: 'y',
+      },
+      {
+        type: 'bar',
+        label: 'Expenses',
+        data: cd.expense,
+        backgroundColor: 'rgba(248,113,113,0.45)',
+        borderColor: '#f87171',
+        borderWidth: 1,
+        borderRadius: 4,
+        yAxisID: 'y',
+      },
+      {
+        type: 'line',
+        label: 'Running Balance',
+        data: cd.balance,
+        borderColor: '#a599ff',
+        borderWidth: 2,
+        borderDash: [5, 3],
+        pointBackgroundColor: '#a599ff',
+        pointRadius: 4,
+        tension: 0.35,
+        fill: false,
+        yAxisID: 'y2',
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: '#8b90b0', font: { family: 'DM Sans', size: 11 } } },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`
+        }
+      }
+    },
+    scales: {
+      x:  { ticks: { color: '#8b90b0' }, grid: { color: '#2e3350' } },
+      y:  { ticks: { color: '#8b90b0', callback: v => '$' + v.toLocaleString() }, grid: { color: '#2e3350' }, position: 'left' },
+      y2: { ticks: { color: '#a599ff', callback: v => '$' + v.toLocaleString() }, grid: { drawOnChartArea: false }, position: 'right' },
+    },
+  },
+});
+
+// Tab switching
+document.getElementById('month-tabs').addEventListener('click', e => {
+  const tab = e.target.closest('.month-tab');
+  if (!tab) return;
+  document.querySelectorAll('.month-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.month-panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById(tab.dataset.panel).classList.add('active');
+});
+</script>
+{% endif %}
+{% endblock %}

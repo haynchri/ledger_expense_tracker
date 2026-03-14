@@ -28,3 +28,10 @@ class CategoryRuleAdmin(admin.ModelAdmin):
     list_display = ['keyword', 'match_type', 'category', 'priority', 'is_active', 'user']
     list_filter  = ['match_type', 'is_active']
     search_fields = ['keyword']
+
+from .models import Budget
+
+@admin.register(Budget)
+class BudgetAdmin(admin.ModelAdmin):
+    list_display = ['category', 'amount', 'user']
+    search_fields = ['category__name']

@@ -201,3 +201,22 @@ def apply_category_rules(user, queryset=None):
                 break  # first matching rule wins
 
     return updated
+
+
+class Budget(models.Model):
+    """Monthly budget target for a category.
+    A budget of e.g. $500 for 'Food & Dining' means you expect/allow
+    $500 of spending (or income) in that category each month.
+    """
+    user     = models.ForeignKey(User, on_delete=models.CASCADE, related_name='budgets')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='budgets')
+    amount   = models.DecimalField(max_digits=12, decimal_places=2,
+                                   help_text='Monthly target amount (always positive)')
+    notes    = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ['category__name']
+        unique_together = ['user', 'category']
+
+    def __str__(self):
+        return f"{self.category} — ${self.amount}/mo"

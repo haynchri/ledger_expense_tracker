@@ -17,6 +17,29 @@ charts, CSV import/export, and monthly reports.
 
 ---
 
+## Auto-Categorisation Rules
+
+Go to **Auto-Categorise** in the sidebar to manage rules that automatically assign categories based on transaction descriptions.
+
+Each rule has:
+- **Keyword** — the text to match (case-insensitive)
+- **Match Type** — Contains / Exact / Starts with / Ends with / Regex
+- **Category** — the category to assign on a match
+- **Priority** — lower number = checked first (first match wins)
+
+The **"Apply All Rules Now"** button on the rules page scans every transaction and updates categories wherever a rule matches. Rules also run automatically after every CSV import.
+
+**Example rules:**
+
+| Keyword | Match Type | Category |
+|---------|-----------|----------|
+| AMAZON | Contains | Shopping |
+| WHOLE FOODS | Contains | Food & Dining |
+| SALARY | Contains | Salary |
+| netflix\|hulu\|spotify | Regex | Entertainment |
+
+---
+
 ## Quick Start
 
 ### 1. Install dependencies

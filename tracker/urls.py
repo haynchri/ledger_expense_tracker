@@ -36,6 +36,15 @@ urlpatterns = [
     path('rules/<int:pk>/delete/', views.rule_delete, name='rule_delete'),
     path('rules/apply/', views.rule_apply, name='rule_apply'),
 
+    # Budgets
+    path('budgets/', views.budget_list, name='budget_list'),
+    path('budgets/new/', views.budget_create, name='budget_create'),
+    path('budgets/<int:pk>/edit/', views.budget_edit, name='budget_edit'),
+    path('budgets/<int:pk>/delete/', views.budget_delete, name='budget_delete'),
+
+    # Forecast
+    path('forecast/', views.forecast, name='forecast'),
+
     # Reports
     path('reports/', views.reports, name='reports'),
 ]

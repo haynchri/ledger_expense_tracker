@@ -457,6 +457,8 @@ def csv_import_map(request):
                         skipped += 1
                         continue
                     txn_type = 'income' if amount > 0 else 'expense'
+                    # if account.account_type == 'credit_card':
+                    #     txn_type = 'expense' if txn_type == 'income' else 'income'
                     amount   = abs(amount)
 
                     date_col    = col_map.get('date')
@@ -699,3 +701,122 @@ def rule_apply(request):
         else:
             messages.info(request, 'No transactions needed updating — all already matched.')
     return redirect('rule_list')
+
+# ── Budgets ───────────────────────────────────────────────────────────────────
+
+@login_required
+def budget_list(request):
+    from .models import Budget, Transaction
+    from django.db.models import Sum, Q
+    from datetime import date
+
+    budgets = Budget.objects.filter(user=request.user).select_related('category')
+
+    today = date.today()
+    month_start = today.replace(day=1)
+
+    # Annotate each budget with current-month actuals
+    budget_rows = []
+    for b in budgets:
+        txn_type = 'income' if b.category.category_type == 'income' else 'expense'
+        actual = Transaction.objects.filter(
+            user=request.user,
+            category=b.category,
+            transaction_type=txn_type,
+            date__gte=month_start,
+        ).aggregate(t=Sum('amount'))['t'] or Decimal('0.00')
+        pct = int(actual / b.amount * 100) if b.amount else 0
+        budget_rows.append({
+            'budget':   b,
+            'actual':   actual,
+            'pct':      min(pct, 100),
+            'over':     actual > b.amount,
+            'txn_type': txn_type,
+        })
+
+    return render(request, 'tracker/budget_list.html', {
+        'budget_rows': budget_rows,
+        'month_label': today.strftime('%B %Y'),
+    })
+
+
+@login_required
+def budget_create(request):
+    from .forms import BudgetForm
+    if request.method == 'POST':
+        form = BudgetForm(request.user, request.POST)
+        if form.is_valid():
+            b = form.save(commit=False)
+            b.user = request.user
+            b.save()
+            messages.success(request, f'Budget created for {b.category}.')
+            return redirect('budget_list')
+    else:
+        form = BudgetForm(request.user)
+    return render(request, 'tracker/budget_form.html', {'form': form, 'title': 'Add Budget'})
+
+
+@login_required
+def budget_edit(request, pk):
+    from .models import Budget
+    from .forms import BudgetForm
+    budget = get_object_or_404(Budget, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = BudgetForm(request.user, request.POST, instance=budget)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Budget updated.')
+            return redirect('budget_list')
+    else:
+        form = BudgetForm(request.user, instance=budget)
+    return render(request, 'tracker/budget_form.html', {
+        'form': form, 'title': 'Edit Budget', 'budget': budget
+    })
+
+
+@login_required
+def budget_delete(request, pk):
+    from .models import Budget
+    budget = get_object_or_404(Budget, pk=pk, user=request.user)
+    if request.method == 'POST':
+        budget.delete()
+        messages.success(request, 'Budget deleted.')
+        return redirect('budget_list')
+    return render(request, 'tracker/confirm_delete.html', {'obj': budget, 'type': 'Budget'})
+
+
+# ── Forecast ──────────────────────────────────────────────────────────────────
+
+@login_required
+def forecast(request):
+    from .forecast import build_forecast
+
+    try:
+        months_ahead = int(request.GET.get('months', 6))
+        months_ahead = max(1, min(months_ahead, 24))
+    except (ValueError, TypeError):
+        months_ahead = 6
+
+    forecast_months = build_forecast(request.user, months_ahead=months_ahead)
+
+    # Build chart data — projected income/expense/net per month + running balance
+    chart_labels   = [fm.label for fm in forecast_months]
+    chart_income   = [float(fm.projected_income)  for fm in forecast_months]
+    chart_expense  = [float(fm.projected_expense) for fm in forecast_months]
+    chart_net      = [float(fm.projected_net)     for fm in forecast_months]
+    chart_balance  = [float(fm.running_balance)   for fm in forecast_months]
+
+    return render(request, 'tracker/forecast.html', {
+        'forecast_months': forecast_months,
+        'months_ahead':    months_ahead,
+        'chart_data_json': json.dumps({
+            'labels':  chart_labels,
+            'income':  chart_income,
+            'expense': chart_expense,
+            'net':     chart_net,
+            'balance': chart_balance,
+        }),
+        'has_data': bool(forecast_months and any(
+            fm.projected_income or fm.projected_expense for fm in forecast_months
+        )),
+    })

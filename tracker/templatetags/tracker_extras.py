@@ -28,3 +28,8 @@ def get_field(form, key):
 def get_field_widget(form, key):
     """Render widget HTML: {{ form|get_field_widget:'date' }}"""
     return mark_safe(str(form[f'map_{key}']))
+
+@register.filter
+def split(value, delimiter=','):
+    """Split a string: {{ '10,25,50'|split:',' }}"""
+    return value.split(delimiter)

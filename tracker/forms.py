@@ -204,3 +204,25 @@ class CategoryRuleForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['category'].queryset = Category.objects.filter(user=user)
+
+
+class BudgetForm(forms.ModelForm):
+    class Meta:
+        from .models import Budget
+        model  = Budget
+        fields = ['category', 'amount', 'notes']
+        widgets = {
+            'category': forms.Select(attrs={'class': 'form-input'}),
+            'amount':   forms.NumberInput(attrs={
+                'class': 'form-input', 'step': '0.01', 'min': '0.01',
+                'placeholder': 'Monthly target, e.g. 500.00',
+            }),
+            'notes': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Optional note about this budget',
+            }),
+        }
+
+    def __init__(self, user, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['category'].queryset = Category.objects.filter(user=user)
