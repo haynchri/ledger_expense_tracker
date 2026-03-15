@@ -135,7 +135,10 @@
 {% block content %}
 <div class="page-header">
   <h1 class="page-title">Category Rules</h1>
-  <a href="{% url 'rule_create' %}" class="btn btn-primary">+ Add Rule</a>
+  <div style="display: flex; gap: 10px;">
+    <a href="{% url 'rule_create' %}" class="btn btn-primary">+ Add Rule</a>
+    <a href="{% url 'rule_export' %}" class="btn btn-primary">📥 Export</a>
+  </div>
 </div>
 
 <p style="color:var(--muted); font-size:0.88rem; margin-bottom:20px;">

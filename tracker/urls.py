@@ -35,6 +35,7 @@ urlpatterns = [
     path('rules/<int:pk>/edit/', views.rule_edit, name='rule_edit'),
     path('rules/<int:pk>/delete/', views.rule_delete, name='rule_delete'),
     path('rules/apply/', views.rule_apply, name='rule_apply'),
+    path('rules/export/', views.rule_export, name='rule_export'),
 
     # Budgets
     path('budgets/', views.budget_list, name='budget_list'),

@@ -457,8 +457,6 @@ def csv_import_map(request):
                         skipped += 1
                         continue
                     txn_type = 'income' if amount > 0 else 'expense'
-                    # if account.account_type == 'credit_card':
-                    #     txn_type = 'expense' if txn_type == 'income' else 'income'
                     amount   = abs(amount)
 
                     date_col    = col_map.get('date')
@@ -701,6 +699,29 @@ def rule_apply(request):
         else:
             messages.info(request, 'No transactions needed updating — all already matched.')
     return redirect('rule_list')
+
+
+@login_required
+def rule_export(request):
+    """Export all category rules as CSV."""
+    from .models import CategoryRule
+    rules = CategoryRule.objects.filter(user=request.user).select_related('category')
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="category_rules.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['keyword', 'match_type', 'category', 'min_amount', 'priority', 'is_active'])
+    for rule in rules:
+        writer.writerow([
+            rule.keyword,
+            rule.get_match_type_display(),
+            rule.category.name,
+            rule.min_amount if rule.min_amount else '',
+            rule.priority,
+            'Yes' if rule.is_active else 'No',
+        ])
+    return response
 
 # ── Budgets ───────────────────────────────────────────────────────────────────
 
