@@ -723,6 +723,167 @@ def rule_export(request):
         ])
     return response
 
+
+@login_required
+def rule_import(request):
+    """Step 1 — upload rule CSV file."""
+    from .forms import RuleCSVUploadForm
+    if request.method == 'POST':
+        form = RuleCSVUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = form.cleaned_data['csv_file']
+            try:
+                raw = csv_file.read().decode('utf-8-sig')
+            except UnicodeDecodeError:
+                csv_file.seek(0)
+                raw = csv_file.read().decode('latin-1')
+
+            reader = csv.DictReader(io.StringIO(raw))
+            headers = reader.fieldnames or []
+            if not headers:
+                form.add_error('csv_file', 'Could not detect any column headers in this file.')
+                return render(request, 'tracker/rule_import.html', {'form': form})
+
+            preview_rows = []
+            for i, row in enumerate(reader):
+                if i >= 5:
+                    break
+                preview_rows.append([row.get(h, '') for h in headers])
+
+            request.session['rule_import'] = {
+                'raw': raw,
+                'headers': headers,
+            }
+            from .forms import RuleCSVMappingForm, RULE_IMPORT_FIELDS
+            return render(request, 'tracker/rule_import_map.html', {
+                'mapping_form': RuleCSVMappingForm(headers),
+                'headers': headers,
+                'preview_rows': preview_rows,
+                'rule_import_fields': RULE_IMPORT_FIELDS,
+            })
+    else:
+        form = RuleCSVUploadForm()
+
+    return render(request, 'tracker/rule_import.html', {'form': form})
+
+
+@login_required
+def rule_import_map(request):
+    """Step 2 — map CSV columns to rule fields and execute the import."""
+    from .forms import RuleCSVMappingForm, RULE_IMPORT_FIELDS, _RULE_SKIP_CHOICE
+    from .models import CategoryRule
+
+    session_data = request.session.get('rule_import')
+    if not session_data:
+        messages.warning(request, 'Import session expired — please start again.')
+        return redirect('rule_import')
+
+    headers = session_data['headers']
+    raw = session_data['raw']
+
+    if request.method == 'POST':
+        mapping_form = RuleCSVMappingForm(headers, request.POST)
+        if mapping_form.is_valid():
+            cd = mapping_form.cleaned_data
+
+            col_map = {}
+            for key, _, _ in RULE_IMPORT_FIELDS:
+                val = cd.get(f'map_{key}', _RULE_SKIP_CHOICE)
+                col_map[key] = None if val == _RULE_SKIP_CHOICE else val
+
+            reader = csv.DictReader(io.StringIO(raw))
+            created, skipped, errors = 0, 0, []
+
+            for i, row in enumerate(reader, start=2):
+                try:
+                    # Extract required fields
+                    keyword = row.get(col_map['keyword'], '').strip() if col_map['keyword'] else ''
+                    if not keyword:
+                        skipped += 1
+                        errors.append(f'Row {i}: Missing keyword')
+                        continue
+
+                    category_name = row.get(col_map['category'], '').strip() if col_map['category'] else ''
+                    if not category_name:
+                        skipped += 1
+                        errors.append(f'Row {i}: Missing category')
+                        continue
+
+                    # Try to find the category
+                    try:
+                        category = Category.objects.get(user=request.user, name=category_name)
+                    except Category.DoesNotExist:
+                        skipped += 1
+                        errors.append(f'Row {i}: Category "{category_name}" not found')
+                        continue
+
+                    # Extract optional fields
+                    match_type = 'contains'
+                    if col_map['match_type']:
+                        match_type_val = row.get(col_map['match_type'], 'contains').strip().lower()
+                        valid_types = ['contains', 'exact', 'startswith', 'endswith', 'regex']
+                        if match_type_val in valid_types:
+                            match_type = match_type_val
+
+                    min_amount = None
+                    if col_map['min_amount']:
+                        min_amt_str = row.get(col_map['min_amount'], '').strip()
+                        if min_amt_str:
+                            try:
+                                min_amount = Decimal(min_amt_str)
+                            except (InvalidOperation, ValueError):
+                                pass
+
+                    priority = 10
+                    if col_map['priority']:
+                        priority_str = row.get(col_map['priority'], '10').strip()
+                        try:
+                            priority = int(priority_str)
+                        except ValueError:
+                            pass
+
+                    # Create or update the rule
+                    rule, created_flag = CategoryRule.objects.get_or_create(
+                        user=request.user,
+                        keyword=keyword,
+                        match_type=match_type,
+                        defaults={
+                            'category': category,
+                            'min_amount': min_amount,
+                            'priority': priority,
+                            'is_active': True,
+                        }
+                    )
+                    if created_flag:
+                        created += 1
+                    else:
+                        skipped += 1
+                        errors.append(f'Row {i}: Rule "{keyword}" already exists')
+
+                except Exception as e:
+                    skipped += 1
+                    errors.append(f'Row {i}: {str(e)}')
+
+            # Show summary
+            messages.success(request, f'Import complete: {created} created, {skipped} skipped.')
+            if errors and len(errors) <= 10:
+                for err in errors:
+                    messages.warning(request, err)
+            elif errors:
+                messages.warning(request, f'{len(errors)} errors — see log for details.')
+
+            del request.session['rule_import']
+            return redirect('rule_list')
+    else:
+        mapping_form = RuleCSVMappingForm(headers)
+
+    from .forms import RULE_IMPORT_FIELDS
+    return render(request, 'tracker/rule_import_map.html', {
+        'mapping_form': mapping_form,
+        'headers': headers,
+        'rule_import_fields': RULE_IMPORT_FIELDS,
+    })
+
 # ── Budgets ───────────────────────────────────────────────────────────────────
 
 @login_required

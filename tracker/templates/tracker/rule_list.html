@@ -136,8 +136,9 @@
 <div class="page-header">
   <h1 class="page-title">Category Rules</h1>
   <div style="display: flex; gap: 10px;">
+    <a href="{% url 'rule_import' %}" class="btn btn-ghost">📤 Import</a>
+    <a href="{% url 'rule_export' %}" class="btn btn-ghost">📥 Export</a>
     <a href="{% url 'rule_create' %}" class="btn btn-primary">+ Add Rule</a>
-    <a href="{% url 'rule_export' %}" class="btn btn-primary">📥 Export</a>
   </div>
 </div>
 

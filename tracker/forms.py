@@ -206,6 +206,66 @@ class CategoryRuleForm(forms.ModelForm):
         self.fields['category'].queryset = Category.objects.filter(user=user)
 
 
+class RuleCSVUploadForm(forms.Form):
+    """Step 1 — upload rule CSV file."""
+    csv_file = forms.FileField(
+        widget=forms.FileInput(attrs={'class': 'form-input', 'accept': '.csv'}),
+        help_text='Upload any CSV — you will map columns on the next screen.'
+    )
+
+
+# Rule import fields: (key, label, required)
+RULE_IMPORT_FIELDS = [
+    ('keyword',    'Keyword',    True),
+    ('match_type', 'Match Type', False),  # optional, defaults to 'contains'
+    ('category',   'Category',   True),
+    ('min_amount', 'Min Amount', False),
+    ('priority',   'Priority',   False),  # optional, defaults to 10
+]
+
+_RULE_SKIP_CHOICE = '__skip__'
+
+
+class RuleCSVMappingForm(forms.Form):
+    """Step 2 — map each rule field to a CSV column header."""
+
+    def __init__(self, csv_headers, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        skip_choices = [(_RULE_SKIP_CHOICE, '— skip / not in file —')]
+        choices = skip_choices + [(h, h) for h in csv_headers]
+
+        lower_map = {h.lower(): h for h in csv_headers}
+        auto_candidates = {
+            'keyword':    ['keyword', 'pattern', 'search', 'text'],
+            'match_type': ['match_type', 'match type', 'type', 'match'],
+            'category':   ['category', 'cat', 'assigns to'],
+            'min_amount': ['min_amount', 'min amount', 'min', 'minimum'],
+            'priority':   ['priority', 'order', 'rank', 'sequence'],
+        }
+
+        for key, label, _ in RULE_IMPORT_FIELDS:
+            initial = _RULE_SKIP_CHOICE
+            for candidate in auto_candidates.get(key, []):
+                if candidate in lower_map:
+                    initial = lower_map[candidate]
+                    break
+            self.fields[f'map_{key}'] = forms.ChoiceField(
+                choices=choices,
+                required=False,
+                label=label,
+                initial=initial,
+                widget=forms.Select(attrs={'class': 'form-input'}),
+            )
+
+    def clean(self):
+        cleaned = super().clean()
+        for key, _, required in RULE_IMPORT_FIELDS:
+            val = cleaned.get(f'map_{key}', _RULE_SKIP_CHOICE)
+            if required and (not val or val == _RULE_SKIP_CHOICE):
+                self.add_error(f'map_{key}', 'Required — please map this to a column.')
+        return cleaned
+
+
 class BudgetForm(forms.ModelForm):
     class Meta:
         from .models import Budget
