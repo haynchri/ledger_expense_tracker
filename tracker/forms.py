@@ -63,8 +63,8 @@ class TransactionFilterForm(forms.Form):
         queryset=None, required=False, empty_label='All Accounts',
         widget=forms.Select(attrs={'class': 'form-input'})
     )
-    category = forms.ModelChoiceField(
-        queryset=None, required=False, empty_label='All Categories',
+    category = forms.ChoiceField(
+        required=False, choices=[],
         widget=forms.Select(attrs={'class': 'form-input'})
     )
     transaction_type = forms.ChoiceField(
@@ -88,7 +88,13 @@ class TransactionFilterForm(forms.Form):
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['account'].queryset = Account.objects.filter(user=user, is_active=True)
-        self.fields['category'].queryset = Category.objects.filter(user=user)
+        
+        # Build category choices: all categories + uncategorized option
+        category_choices = [('', 'All Categories')]
+        for cat in Category.objects.filter(user=user).order_by('name'):
+            category_choices.append((str(cat.id), str(cat)))
+        category_choices.append(('__uncategorized__', 'Uncategorized'))
+        self.fields['category'].choices = category_choices
 
 
 class CSVUploadForm(forms.Form):

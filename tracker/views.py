@@ -249,7 +249,10 @@ def transaction_list(request):
         if d.get('account'):
             qs = qs.filter(account=d['account'])
         if d.get('category'):
-            qs = qs.filter(category=d['category'])
+            if d['category'] == '__uncategorized__':
+                qs = qs.filter(category__isnull=True)
+            else:
+                qs = qs.filter(category_id=d['category'])
         if d.get('transaction_type'):
             qs = qs.filter(transaction_type=d['transaction_type'])
         if d.get('date_from'):
