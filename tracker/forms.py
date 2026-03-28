@@ -91,22 +91,6 @@ class TransactionFilterForm(forms.Form):
         self.fields['category'].queryset = Category.objects.filter(user=user)
 
 
-# class CSVImportForm(forms.Form):
-#     account = forms.ModelChoiceField(
-#         queryset=None,
-#         widget=forms.Select(attrs={'class': 'form-input'}),
-#         help_text='Which account should these transactions be assigned to?'
-#     )
-#     csv_file = forms.FileField(
-#         widget=forms.FileInput(attrs={'class': 'form-input', 'accept': '.csv'}),
-#         help_text='CSV must have columns: date, description, amount, type (income/expense), category (optional)'
-#     )
-
-#     def __init__(self, user, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.fields['account'].queryset = Account.objects.filter(user=user, is_active=True)
-
-
 class CSVUploadForm(forms.Form):
     """Step 1 — pick account + upload file + optional statement date."""
     account = forms.ModelChoiceField(
