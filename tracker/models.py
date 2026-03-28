@@ -60,10 +60,11 @@ class Category(models.Model):
 
     ICONS = [
         ('🏠', 'Housing'), ('🚗', 'Transport'), ('🍔', 'Food'), ('💊', 'Health'),
-        ('🎮', 'Entertainment'), ('👕', 'Clothing'), ('📚', 'Education'),
+        ('🎮', 'Entertainment'), ('👕', 'Clothing'), ('🎓', 'Education'),
         ('💼', 'Work'), ('💰', 'Income'), ('🛒', 'Shopping'), ('✈️', 'Travel'),
         ('📱', 'Technology'), ('⚡', 'Utilities'), ('🎁', 'Gifts'), ('🐾', 'Pets'),
-        ('⛽', 'Fuel'), ('🏪', 'Grocery'), ('💡', 'Other'),
+        ('⛽', 'Fuel'), ('🏪', 'Grocery'), ('💡', 'Other'), ('🏢', 'Insurance'),
+        ('🎹', 'Piano'), ('🏊', 'Swimming'), ('💵', 'Subscriptions'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='categories')

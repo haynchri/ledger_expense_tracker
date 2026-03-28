@@ -134,10 +134,12 @@ def build_forecast(user, months_ahead: int = 6) -> List[ForecastMonth]:
     # Group by (category_id, txn_type) → sum of amounts
     recurring_by_cat = defaultdict(Decimal)   # key: (cat_id, txn_type)
     cat_meta = {}                              # cat_id → (name, icon, color)
+    count_by_cat = defaultdict(int)
 
     for txn in recurring_txns:
         key = (txn.category_id, txn.transaction_type)
         recurring_by_cat[key] += txn.amount
+        count_by_cat[key] += 1
         if txn.category_id not in cat_meta:
             if txn.category:
                 cat_meta[txn.category_id] = (

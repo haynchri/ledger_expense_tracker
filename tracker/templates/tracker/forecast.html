@@ -90,6 +90,10 @@
   }
   .balance-positive { color: var(--green); border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.07); }
   .balance-negative { color: var(--red);   border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.07); }
+
+  .strip-value.green { color: var(--green); }
+  .strip-value.red { color: var(--red); }
+  .strip-value.accent { color: var(--accent-light); }
 </style>
 {% endblock %}
 
@@ -183,7 +187,7 @@
     </div>
     <div class="strip-card">
       <div class="strip-label">Running Balance</div>
-      <div class="strip-value {% if fm.running_balance >= 0 %}accent{% else %}red{% endif %}">
+      <div class="strip-value {% if fm.running_balance >= 0 %}green{% else %}red{% endif %}">
         ${{ fm.running_balance|floatformat:2 }}
       </div>
       <div style="font-size:0.7rem;color:var(--muted);margin-top:3px;">end of {{ fm.label }}</div>
