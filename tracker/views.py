@@ -372,13 +372,14 @@ def csv_export(request):
 
 @login_required
 def csv_import(request):
-    """Step 1 — choose account and upload the CSV file."""
+    """Step 1 — choose account, optional statement date, and upload the CSV file."""
     from .forms import CSVUploadForm
     if request.method == 'POST':
         form = CSVUploadForm(request.user, request.POST, request.FILES)
         if form.is_valid():
             csv_file = form.cleaned_data['csv_file']
             account  = form.cleaned_data['account']
+            statement_date = form.cleaned_data.get('statement_date')
             try:
                 raw = csv_file.read().decode('utf-8-sig')
             except UnicodeDecodeError:
@@ -401,6 +402,7 @@ def csv_import(request):
                 'account_id': account.pk,
                 'raw':        raw,
                 'headers':    headers,
+                'statement_date': statement_date.isoformat() if statement_date else None,
             }
             from .forms import CSVMappingForm
             from .forms import DB_FIELDS
@@ -430,7 +432,23 @@ def csv_import_map(request):
     headers    = session_data['headers']
     raw        = session_data['raw']
     account_id = session_data['account_id']
+    statement_date_str = session_data.get('statement_date')
     account    = get_object_or_404(Account, pk=account_id, user=request.user)
+
+    # Parse statement date if provided
+    statement = None
+    if statement_date_str:
+        try:
+            from datetime import datetime
+            statement_date = datetime.fromisoformat(statement_date_str).date()
+            statement, _ = Statement.objects.get_or_create(
+                user=request.user,
+                account=account,
+                statement_date=statement_date,
+                defaults={'description': f'{account.name} — {statement_date.strftime("%B %Y")}'}
+            )
+        except (ValueError, AttributeError):
+            statement = None
 
     if request.method == 'POST':
         mapping_form = CSVMappingForm(headers, request.POST)
@@ -495,6 +513,7 @@ def csv_import_map(request):
                         date=parsed_date,
                         notes=notes,
                         category=category,
+                        statement=statement,
                     )
                     created += 1
 
@@ -511,6 +530,8 @@ def csv_import_map(request):
                 messages.success(request, f'Imported {created} transaction{"s" if created != 1 else ""}.')
                 if rule_hits:
                     messages.success(request, f'Auto-categorised {rule_hits} transaction{"s" if rule_hits != 1 else ""} using your rules.')
+                if statement:
+                    messages.info(request, f'Associated {created} transaction{"s" if created != 1 else ""} with statement dated {statement.statement_date.strftime("%B %d, %Y")}.')
             if skipped:
                 messages.warning(request, f'{skipped} row{"s" if skipped != 1 else ""} skipped.')
             for err in errors[:8]:

@@ -82,6 +82,24 @@ class Category(models.Model):
         return f"{self.icon} {self.name}"
 
 
+class Statement(models.Model):
+    """Bank statement record that groups transactions from a statement period.
+    Transactions can optionally be associated with a statement.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='statements')
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='statements')
+    statement_date = models.DateField(help_text='The date of the statement')
+    description = models.CharField(max_length=255, blank=True, help_text='e.g., May 2024 Statement')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-statement_date']
+        unique_together = ['user', 'account', 'statement_date']
+
+    def __str__(self):
+        return f"{self.account.name} — {self.statement_date.strftime('%B %Y')}"
+
+
 class Transaction(models.Model):
     TRANSACTION_TYPES = [
         ('income', 'Income'),
@@ -93,6 +111,10 @@ class Transaction(models.Model):
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='transactions'
+    )
+    statement = models.ForeignKey(
+        Statement, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='transactions', help_text='Optional — the statement this transaction belongs to'
     )
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
