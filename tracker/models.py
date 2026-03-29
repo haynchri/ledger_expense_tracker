@@ -106,6 +106,13 @@ class Transaction(models.Model):
         ('expense', 'Expense'),
     ]
 
+    RECURRING_PERIODS = [
+        ('', 'Non-recurring'),
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly (1/3 per month)'),
+        ('yearly', 'Yearly (1/12 per month)'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions')
     account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='transactions')
     category = models.ForeignKey(
@@ -122,7 +129,10 @@ class Transaction(models.Model):
     date = models.DateField(default=timezone.now)
     notes = models.TextField(blank=True)
     receipt = models.FileField(upload_to='receipts/', null=True, blank=True)
-    is_recurring = models.BooleanField(default=False)
+    recurring_period = models.CharField(
+        max_length=12, choices=RECURRING_PERIODS, default='', blank=True,
+        help_text='Leave blank for non-recurring; otherwise specifies how often this transaction repeats'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

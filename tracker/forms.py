@@ -32,7 +32,7 @@ class CategoryForm(forms.ModelForm):
 class TransactionForm(forms.ModelForm):
     class Meta:
         model = Transaction
-        fields = ['transaction_type', 'account', 'category', 'amount', 'description', 'date', 'notes', 'receipt', 'is_recurring']
+        fields = ['transaction_type', 'account', 'category', 'amount', 'description', 'date', 'notes', 'receipt', 'recurring_period']
         widgets = {
             'transaction_type': forms.Select(attrs={'class': 'form-input'}),
             'account': forms.Select(attrs={'class': 'form-input'}),
@@ -42,7 +42,7 @@ class TransactionForm(forms.ModelForm):
             'date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
             'notes': forms.Textarea(attrs={'class': 'form-input', 'rows': 3, 'placeholder': 'Optional notes...'}),
             'receipt': forms.FileInput(attrs={'class': 'form-input'}),
-            'is_recurring': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+            'recurring_period': forms.Select(attrs={'class': 'form-input'}),
         }
 
     def __init__(self, user, *args, **kwargs):

@@ -155,7 +155,7 @@
           <td>
             <div style="font-weight:500;">{{ txn.description }}</div>
             {% if txn.notes %}<div style="font-size:0.75rem; color:var(--muted);">{{ txn.notes|truncatechars:40 }}</div>{% endif %}
-            {% if txn.is_recurring %}<span style="font-size:0.68rem; color:var(--accent-light);">🔁 Recurring</span>{% endif %}
+            {% if txn.recurring_period %}<span style="font-size:0.68rem; color:var(--accent-light);">🔁 {{ txn.get_recurring_period_display }}</span>{% endif %}
           </td>
           <td>
             <span style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem;">

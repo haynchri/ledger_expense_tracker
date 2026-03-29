@@ -60,9 +60,10 @@
         {% endif %}
       </div>
 
-      <div class="form-group" style="display:flex; align-items:center; gap:10px;">
-        {{ form.is_recurring }}
-        <label style="font-size:0.88rem; cursor:pointer;">This is a recurring transaction</label>
+      <div class="form-group">
+        <label style="font-size:0.88rem; display:block; margin-bottom:6px;">Recurrence Period</label>
+        {{ form.recurring_period }}
+        <div class="form-help">Leave blank for non-recurring transactions. Quarterly and Yearly are divided across 12 months.</div>
       </div>
 
       {% if form.errors %}

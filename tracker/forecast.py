@@ -3,7 +3,7 @@ Forecast engine for Ledger.
 
 Strategy:
   For each future month we build a ForecastMonth that contains:
-    - recurring_income / recurring_expense  (from is_recurring transactions)
+    - recurring_income / recurring_expense  (from recurring_period transactions)
     - budget_income / budget_expense        (from Budget objects)
     - projected_income / projected_expense  (max of recurring vs budget per category,
                                              then fallback to whichever exists)
@@ -112,7 +112,7 @@ def build_forecast(user, months_ahead: int = 6) -> List[ForecastMonth]:
     Build a forecast for `months_ahead` future months.
 
     Projection logic per category per month:
-      - recurring_amount = sum of all is_recurring transactions in that category
+      - recurring_amount = sum of all recurring_period transactions in that category (monthly equivalent)
       - budget_amount    = Budget.amount for that category (0 if none)
       - projected_amount:
           * If both exist  → use the larger of the two (conservative estimate)
@@ -127,18 +127,29 @@ def build_forecast(user, months_ahead: int = 6) -> List[ForecastMonth]:
     # ── 1. Collect all recurring transactions ────────────────────────────────
     recurring_txns = (
         Transaction.objects
-        .filter(user=user, is_recurring=True)
+        .exclude(recurring_period='')
         .select_related('category')
+        .filter(user=user)
     )
 
-    # Group by (category_id, txn_type) → sum of amounts
+    # Group by (category_id, txn_type) → sum of monthly amounts
     recurring_by_cat = defaultdict(Decimal)   # key: (cat_id, txn_type)
     cat_meta = {}                              # cat_id → (name, icon, color)
     count_by_cat = defaultdict(int)
 
     for txn in recurring_txns:
+        # Calculate the monthly amount based on recurring period
+        if txn.recurring_period == 'monthly':
+            monthly_amount = txn.amount
+        elif txn.recurring_period == 'quarterly':
+            monthly_amount = txn.amount / Decimal('3')
+        elif txn.recurring_period == 'yearly':
+            monthly_amount = txn.amount / Decimal('12')
+        else:
+            continue
+
         key = (txn.category_id, txn.transaction_type)
-        recurring_by_cat[key] += txn.amount
+        recurring_by_cat[key] += monthly_amount
         count_by_cat[key] += 1
         if txn.category_id not in cat_meta:
             if txn.category:

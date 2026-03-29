@@ -362,13 +362,13 @@ def csv_export(request):
     response['Content-Disposition'] = 'attachment; filename="transactions.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['date', 'type', 'account', 'category', 'description', 'amount', 'notes', 'recurring'])
+    writer.writerow(['date', 'type', 'account', 'category', 'description', 'amount', 'notes', 'recurring_period'])
     for t in qs:
         writer.writerow([
             t.date, t.transaction_type,
             t.account.name,
             t.category.name if t.category else '',
-            t.description, t.amount, t.notes, t.is_recurring
+            t.description, t.amount, t.notes, t.recurring_period
         ])
     return response
 
