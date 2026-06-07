@@ -86,6 +86,9 @@ def dashboard(request):
         'category__name', 'category__color', 'category__icon'
     ).annotate(total=Sum('amount')).order_by('-total')[:6]
 
+    # Get all categories for the filter dropdown
+    all_categories = Category.objects.filter(user=request.user).order_by('name')
+
     context = {
         'accounts': accounts,
         'monthly_income': monthly_income,
@@ -94,11 +97,12 @@ def dashboard(request):
         'recent_transactions': recent_transactions,
         'chart_data_json': json.dumps(chart_data),
         'category_spending': list(category_spending),
+        'categories': all_categories,
     }
     return render(request, 'tracker/dashboard.html', context)
 
 
-def _get_monthly_chart_data(user, months=6):
+def _get_monthly_chart_data(user, months=6, category_id=None):
     today = date.today()
     labels, income_data, expense_data = [], [], []
     for i in range(months - 1, -1, -1):
@@ -114,21 +118,46 @@ def _get_monthly_chart_data(user, months=6):
         else:
             month_end = date(year, month + 1, 1) - timedelta(days=1)
 
-        inc = Transaction.objects.filter(
+        # Build filter query
+        income_filter = Q(
             user=user, transaction_type='income',
             date__gte=month_start, date__lte=month_end
-        ).aggregate(t=Sum('amount'))['t'] or 0
-
-        exp = Transaction.objects.filter(
+        )
+        expense_filter = Q(
             user=user, transaction_type='expense',
             date__gte=month_start, date__lte=month_end
-        ).aggregate(t=Sum('amount'))['t'] or 0
+        )
+        
+        # Add category filter if specified
+        if category_id:
+            income_filter &= Q(category_id=category_id)
+            expense_filter &= Q(category_id=category_id)
+
+        inc = Transaction.objects.filter(income_filter).aggregate(t=Sum('amount'))['t'] or 0
+        exp = Transaction.objects.filter(expense_filter).aggregate(t=Sum('amount'))['t'] or 0
 
         labels.append(month_start.strftime('%b %Y'))
         income_data.append(float(inc))
         expense_data.append(float(exp))
 
     return {'labels': labels, 'income': income_data, 'expenses': expense_data}
+
+
+@login_required
+def dashboard_chart_data(request):
+    """API endpoint to fetch chart data, optionally filtered by category."""
+    category_id = request.GET.get('category_id')
+    if category_id:
+        try:
+            category_id = int(category_id)
+            # Verify category belongs to this user
+            Category.objects.get(id=category_id, user=request.user)
+        except (ValueError, Category.DoesNotExist):
+            return HttpResponse(json.dumps({'error': 'Invalid category'}), 
+                              content_type='application/json', status=400)
+    
+    chart_data = _get_monthly_chart_data(request.user, months=6, category_id=category_id)
+    return HttpResponse(json.dumps(chart_data), content_type='application/json')
 
 
 # ── Accounts ──────────────────────────────────────────────────────────────────

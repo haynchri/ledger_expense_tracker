@@ -64,7 +64,7 @@ class Category(models.Model):
         ('💼', 'Work'), ('💰', 'Income'), ('🛒', 'Shopping'), ('✈️', 'Travel'),
         ('📱', 'Technology'), ('⚡', 'Utilities'), ('🎁', 'Gifts'), ('🐾', 'Pets'),
         ('⛽', 'Fuel'), ('🏪', 'Grocery'), ('💡', 'Other'), ('🏢', 'Insurance'),
-        ('🎹', 'Piano'), ('🏊', 'Swimming'), ('💵', 'Subscriptions'),
+        ('🎹', 'Piano'), ('🏊', 'Swimming'), ('💵', 'Subscriptions'), ('💳', 'Credit Card')
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='categories')
