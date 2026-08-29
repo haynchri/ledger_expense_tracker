@@ -958,6 +958,91 @@ body {
   font-weight: 600;
 }
 
+.ajax-form {
+  width: 100%;
+}
+
+.form-attachment-note {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--accent-light);
+}
+
+.recurrence-label {
+  font-size: 0.88rem;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.reports-summary-grid {
+  margin-bottom: 28px;
+}
+
+.reports-layout {
+  margin-bottom: 24px;
+}
+
+.reports-chart-wrap {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.import-tip-code {
+  font-family: monospace;
+  font-size: 0.82rem;
+  color: var(--accent-light);
+}
+
+.table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.rule-min-amount {
+  font-size: 0.82rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.rule-min-any {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.rule-summary-note {
+  margin-top: 12px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.stat-amount-lg {
+  font-size: 1.4rem;
+}
+
+.transaction-filter-card {
+  margin-bottom: 20px;
+}
+
+.reports-filter-card {
+  margin-bottom: 20px;
+}
+
+.reports-filter-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.reports-filter-label {
+  margin-bottom: 0;
+}
+
+.reports-filter-select {
+  min-width: 140px;
+}
+
 .form-group { margin-bottom: 18px; }
 
 .form-label {
@@ -1242,4 +1327,63 @@ tr:hover td { background: var(--surface2); }
   .sidebar { transform: translateX(-100%); }
   .main { margin-left: 0; padding: 20px; }
   .two-col, .three-col, .form-grid { grid-template-columns: 1fr; }
+}
+
+
+.reports-category-row {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid var(--border);
+}
+
+.reports-category-icon {
+  font-size:1.1rem;
+  width:24px;
+}
+
+.reports-category-main {
+  flex:1;
+}
+
+.reports-category-name {
+  font-size:0.88rem;
+  font-weight:500;
+}
+
+.reports-category-bar {
+  height:4px;
+  background:var(--surface2);
+  border-radius:2px;
+  margin-top:4px;
+}
+
+.reports-category-fill {
+  height:4px;
+  border-radius:2px;
+}
+
+.reports-category-total {
+  text-align:right;
+  font-size:0.88rem;
+}
+
+.reports-filter-card {
+  margin-bottom:20px;
+}
+
+.reports-filter-form {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.reports-filter-label {
+  margin:0;
+}
+
+.reports-filter-select {
+  width:140px !important;
 }
