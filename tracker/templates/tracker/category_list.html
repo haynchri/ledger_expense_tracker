@@ -31,8 +31,8 @@
           <td style="color:var(--muted); font-size:0.85rem;">{{ cat.transactions.count }}</td>
           <td>
             <div style="display:flex; gap:6px; justify-content:flex-end;">
-              <a href="{% url 'category_edit' cat.pk %}" class="btn btn-ghost btn-sm">Edit</a>
-              <a href="{% url 'category_delete' cat.pk %}" class="btn btn-danger btn-sm">Delete</a>
+              <a href="{% url 'category_edit' cat.pk %}" data-modal-url="{% url 'category_edit' cat.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+              <a href="{% url 'category_delete' cat.pk %}" data-modal-url="{% url 'category_delete' cat.pk %}" class="btn btn-danger btn-sm">Delete</a>
             </div>
           </td>
         </tr>

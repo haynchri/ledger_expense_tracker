@@ -74,7 +74,7 @@
   <h1 class="page-title">Transactions</h1>
   <div style="display:flex; gap:10px;">
     <a href="{% url 'csv_export' %}?{{ request.GET.urlencode }}" class="btn btn-ghost">📤 Export</a>
-    <a href="{% url 'transaction_create' %}" class="btn btn-primary">+ Add Transaction</a>
+    <a href="{% url 'transaction_create' %}" data-modal-url="{% url 'transaction_create' %}" class="btn btn-primary">+ Add Transaction</a>
   </div>
 </div>
 
@@ -178,8 +178,8 @@
           </td>
           <td>
             <div style="display:flex; gap:6px; justify-content:flex-end;">
-              <a href="{% url 'transaction_edit' txn.pk %}" class="btn btn-ghost btn-sm">Edit</a>
-              <a href="{% url 'transaction_delete' txn.pk %}" class="btn btn-danger btn-sm">Del</a>
+              <a href="{% url 'transaction_edit' txn.pk %}" data-modal-url="{% url 'transaction_edit' txn.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+              <a href="{% url 'transaction_delete' txn.pk %}" data-modal-url="{% url 'transaction_delete' txn.pk %}" class="btn btn-danger btn-sm">Del</a>
             </div>
           </td>
         </tr>
@@ -272,7 +272,7 @@
     <div class="empty-state">
       <div class="empty-icon">💳</div>
       <p>No transactions match your filters.</p>
-      <a href="{% url 'transaction_create' %}" class="btn btn-primary">Add Transaction</a>
+      <a href="{% url 'transaction_create' %}" data-modal-url="{% url 'transaction_create' %}" class="btn btn-primary">Add Transaction</a>
     </div>
   {% endif %}
 </div>

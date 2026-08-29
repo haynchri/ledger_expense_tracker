@@ -373,6 +373,141 @@
     .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
     .empty-state p { margin-bottom: 20px; }
 
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 17, 23, 0.72);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 2000;
+    }
+    .modal-backdrop.hidden { display: none; }
+
+    .modal-panel {
+      width: min(640px, 100%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      max-height: 90vh;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) rgba(124, 106, 247, 0.18);
+    }
+
+    .modal-panel::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    .modal-panel::-webkit-scrollbar-track {
+      background: rgba(124, 106, 247, 0.08);
+      border-left: 1px solid var(--border);
+    }
+    .modal-panel::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-light) 100%);
+      border: 2px solid var(--surface);
+      border-radius: 999px;
+    }
+    .modal-panel::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, var(--accent-light) 0%, var(--accent) 100%);
+    }
+
+    .modal-header,
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-footer {
+      border-top: 1px solid var(--border);
+      border-bottom: none;
+      justify-content: flex-end;
+      padding-top: 16px;
+      padding-bottom: 22px;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .modal-header h3 {
+      font-family: var(--font-heading);
+      font-size: 1.4rem;
+      color: var(--text);
+    }
+    .modal-close {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 1.4rem;
+      cursor: pointer;
+    }
+    .modal-copy {
+      color: var(--muted);
+      padding: 22px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    .modal-copy strong { color: var(--text); }
+    .modal-form-wrap {
+      padding: 22px 22px 0;
+    }
+    .modal-form-wrap .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .modal-form-wrap .form-group {
+      margin-bottom: 18px;
+    }
+    .modal-form-wrap .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .modal-form-wrap .form-help {
+      margin-top: 4px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .modal-error-box,
+    .field-error {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.4);
+      color: var(--red);
+      font-size: 0.8rem;
+    }
+    .checkbox-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .checkbox-row input {
+      width: auto;
+      margin-right: 8px;
+    }
+
     /* Grid layouts */
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -468,7 +603,101 @@
     {% block content %}{% endblock %}
   </main>
 
+  <div id="modal-root" class="modal-backdrop hidden" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
   <script>
+    const modalRoot = document.getElementById('modal-root');
+    const modalContent = document.getElementById('modal-content');
+
+    function closeModal() {
+      modalRoot.classList.add('hidden');
+      modalRoot.setAttribute('aria-hidden', 'true');
+      modalContent.innerHTML = '';
+    }
+
+    function openModalFromUrl(url) {
+      const modalUrl = url.includes('?') ? `${url}&modal=1` : `${url}?modal=1`;
+      modalRoot.classList.remove('hidden');
+      modalRoot.setAttribute('aria-hidden', 'false');
+
+      fetch(modalUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Failed to load modal');
+          }
+          return response.text();
+        })
+        .then((html) => {
+          modalContent.innerHTML = html;
+          bindModalForms();
+        })
+        .catch(() => {
+          closeModal();
+          window.location.href = url;
+        });
+    }
+
+    function bindModalForms() {
+      const form = modalContent.querySelector('.ajax-form');
+      if (!form) return;
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(form);
+        const action = form.getAttribute('action');
+
+        const response = await fetch(action, {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (response.redirected) {
+          window.location.reload();
+          return;
+        }
+
+        const html = await response.text();
+        if (html.includes('class="ajax-form"')) {
+          modalContent.innerHTML = html;
+          bindModalForms();
+          return;
+        }
+
+        window.location.reload();
+      });
+    }
+
+    document.addEventListener('click', (event) => {
+      const closeTrigger = event.target.closest('[data-modal-close]');
+      if (closeTrigger) {
+        closeModal();
+        return;
+      }
+
+      const trigger = event.target.closest('[data-modal-url]');
+      if (!trigger) return;
+
+      event.preventDefault();
+      openModalFromUrl(trigger.getAttribute('data-modal-url'));
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !modalRoot.classList.contains('hidden')) {
+        closeModal();
+      }
+    });
+
+    modalRoot.addEventListener('click', (event) => {
+      if (event.target === modalRoot) {
+        closeModal();
+      }
+    });
+
     // Auto-dismiss messages
     setTimeout(() => {
       const msgs = document.getElementById('messages');

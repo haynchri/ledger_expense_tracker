@@ -52,7 +52,7 @@
     <div style="display:flex; gap:8px;">
       <a href="{% url 'account_detail' account.pk %}" class="btn btn-ghost btn-sm" style="flex:1; justify-content:center;">View</a>
       <a href="{% url 'account_edit' account.pk %}" class="btn btn-ghost btn-sm">Edit</a>
-      <a href="{% url 'account_delete' account.pk %}" class="btn btn-danger btn-sm">Delete</a>
+      <a href="{% url 'account_delete' account.pk %}" data-modal-url="{% url 'account_delete' account.pk %}" class="btn btn-danger btn-sm">Delete</a>
     </div>
   </div>
   {% endfor %}

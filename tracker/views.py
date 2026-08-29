@@ -19,6 +19,10 @@ from .forms import (
 )
 
 
+def _is_modal_request(request):
+    return request.GET.get('modal') == '1' or request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
 def register(request):
@@ -205,6 +209,8 @@ def account_delete(request, pk):
         account.save()
         messages.success(request, f'Account "{account.name}" removed.')
         return redirect('account_list')
+    if _is_modal_request(request):
+        return render(request, 'tracker/partials/modal_delete.html', {'obj': account, 'type': 'Account', 'action_url': request.path})
     return render(request, 'tracker/confirm_delete.html', {'obj': account, 'type': 'Account'})
 
 
@@ -250,8 +256,23 @@ def category_edit(request, pk):
             form.save()
             messages.success(request, 'Category updated.')
             return redirect('category_list')
+        # Form is invalid
+        if _is_modal_request(request):
+            return render(request, 'tracker/partials/modal_form.html', {
+                'form': form,
+                'title': 'Edit Category',
+                'submit_text': 'Save Changes',
+                'action_url': request.path,
+            })
     else:
         form = CategoryForm(instance=category)
+    if _is_modal_request(request):
+        return render(request, 'tracker/partials/modal_form.html', {
+            'form': form,
+            'title': 'Edit Category',
+            'submit_text': 'Save Changes',
+            'action_url': request.path,
+        })
     return render(request, 'tracker/category_form.html', {'form': form, 'title': 'Edit Category'})
 
 
@@ -262,6 +283,8 @@ def category_delete(request, pk):
         category.delete()
         messages.success(request, 'Category deleted.')
         return redirect('category_list')
+    if _is_modal_request(request):
+        return render(request, 'tracker/partials/modal_delete.html', {'obj': category, 'type': 'Category', 'action_url': request.path})
     return render(request, 'tracker/confirm_delete.html', {'obj': category, 'type': 'Category'})
 
 
@@ -337,8 +360,23 @@ def transaction_create(request):
             txn.save()
             messages.success(request, 'Transaction added.')
             return redirect('transaction_list')
+        if _is_modal_request(request):
+            return render(request, 'tracker/partials/modal_form.html', {
+                'form': form,
+                'title': 'Add Transaction',
+                'submit_text': 'Add Transaction',
+                'action_url': request.path,
+            })
     else:
         form = TransactionForm(request.user)
+
+    if _is_modal_request(request):
+        return render(request, 'tracker/partials/modal_form.html', {
+            'form': form,
+            'title': 'Add Transaction',
+            'submit_text': 'Add Transaction',
+            'action_url': request.path,
+        })
     return render(request, 'tracker/transaction_form.html', {'form': form, 'title': 'Add Transaction'})
 
 
@@ -351,8 +389,22 @@ def transaction_edit(request, pk):
             form.save()
             messages.success(request, 'Transaction updated.')
             return redirect('transaction_list')
+        if _is_modal_request(request):
+            return render(request, 'tracker/partials/modal_form.html', {
+                'form': form,
+                'title': 'Edit Transaction',
+                'submit_text': 'Save Changes',
+                'action_url': request.path,
+            })
     else:
         form = TransactionForm(request.user, instance=txn)
+    if _is_modal_request(request):
+        return render(request, 'tracker/partials/modal_form.html', {
+            'form': form,
+            'title': 'Edit Transaction',
+            'submit_text': 'Save Changes',
+            'action_url': request.path,
+        })
     return render(request, 'tracker/transaction_form.html', {'form': form, 'title': 'Edit Transaction', 'txn': txn})
 
 
@@ -363,6 +415,8 @@ def transaction_delete(request, pk):
         txn.delete()
         messages.success(request, 'Transaction deleted.')
         return redirect('transaction_list')
+    if _is_modal_request(request):
+        return render(request, 'tracker/partials/modal_delete.html', {'obj': txn, 'type': 'Transaction', 'action_url': request.path})
     return render(request, 'tracker/confirm_delete.html', {'obj': txn, 'type': 'Transaction'})
 
 
@@ -738,6 +792,8 @@ def rule_delete(request, pk):
         rule.delete()
         messages.success(request, f'Rule "{rule.keyword}" deleted.')
         return redirect('rule_list')
+    if _is_modal_request(request):
+        return render(request, 'tracker/partials/modal_delete.html', {'obj': rule, 'type': 'Rule', 'action_url': request.path})
     return render(request, 'tracker/confirm_delete.html', {'obj': rule, 'type': 'Rule'})
 
 
@@ -1002,8 +1058,22 @@ def budget_edit(request, pk):
             form.save()
             messages.success(request, 'Budget updated.')
             return redirect('budget_list')
+        if _is_modal_request(request):
+            return render(request, 'tracker/partials/modal_form.html', {
+                'form': form,
+                'title': 'Edit Budget',
+                'submit_text': 'Save Changes',
+                'action_url': request.path,
+            })
     else:
         form = BudgetForm(request.user, instance=budget)
+    if _is_modal_request(request):
+        return render(request, 'tracker/partials/modal_form.html', {
+            'form': form,
+            'title': 'Edit Budget',
+            'submit_text': 'Save Changes',
+            'action_url': request.path,
+        })
     return render(request, 'tracker/budget_form.html', {
         'form': form, 'title': 'Edit Budget', 'budget': budget
     })
@@ -1017,6 +1087,8 @@ def budget_delete(request, pk):
         budget.delete()
         messages.success(request, 'Budget deleted.')
         return redirect('budget_list')
+    if _is_modal_request(request):
+        return render(request, 'tracker/partials/modal_delete.html', {'obj': budget, 'type': 'Budget', 'action_url': request.path})
     return render(request, 'tracker/confirm_delete.html', {'obj': budget, 'type': 'Budget'})
 
 

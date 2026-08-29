@@ -1,0 +1,17 @@
+<form method="post" action="{{ action_url }}" class="ajax-form">
+  {% csrf_token %}
+  <div class="modal-header">
+    <h3 id="modal-title">Delete {{ type }}?</h3>
+    <button type="button" class="modal-close" data-modal-close aria-label="Close">×</button>
+  </div>
+
+  <p class="modal-copy">
+    Are you sure you want to delete <strong>{{ obj }}</strong>?
+    This action cannot be undone.
+  </p>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+  </div>
+</form>

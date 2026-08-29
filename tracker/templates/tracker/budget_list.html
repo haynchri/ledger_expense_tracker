@@ -95,8 +95,8 @@
         </div>
       </div>
       <div style="display:flex; gap:6px;">
-        <a href="{% url 'budget_edit' row.budget.pk %}" class="btn btn-ghost btn-sm">Edit</a>
-        <a href="{% url 'budget_delete' row.budget.pk %}" class="btn btn-danger btn-sm">Del</a>
+        <a href="{% url 'budget_edit' row.budget.pk %}" data-modal-url="{% url 'budget_edit' row.budget.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+        <a href="{% url 'budget_delete' row.budget.pk %}" data-modal-url="{% url 'budget_delete' row.budget.pk %}" class="btn btn-danger btn-sm">Del</a>
       </div>
     </div>
 

@@ -1,0 +1,149 @@
+<form method="post" action="{{ action_url }}" class="ajax-form" novalidate>
+  {% csrf_token %}
+  <div class="modal-header">
+    <h3 id="modal-title">{{ title }}</h3>
+    <button type="button" class="modal-close" data-modal-close aria-label="Close">×</button>
+  </div>
+
+  <div class="modal-form-wrap">
+    {% if form.non_field_errors %}
+      <div class="modal-error-box">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    {% if form.transaction_type or form.account or form.name or form.account_type or form.keyword or form.match_type or form.category or form.amount %}
+      <div class="form-grid" style="margin-bottom:0;">
+        {% if form.transaction_type %}
+          <div class="form-group">{{ form.transaction_type.label_tag }} {{ form.transaction_type }}</div>
+        {% endif %}
+        {% if form.account %}
+          <div class="form-group">{{ form.account.label_tag }} {{ form.account }}</div>
+        {% endif %}
+        {% if form.name %}
+          <div class="form-group">{{ form.name.label_tag }} {{ form.name }}</div>
+        {% endif %}
+        {% if form.account_type %}
+          <div class="form-group">{{ form.account_type.label_tag }} {{ form.account_type }}</div>
+        {% endif %}
+        {% if form.keyword %}
+          <div class="form-group">{{ form.keyword.label_tag }} {{ form.keyword }}</div>
+        {% endif %}
+        {% if form.match_type %}
+          <div class="form-group">{{ form.match_type.label_tag }} {{ form.match_type }}</div>
+        {% endif %}
+        {% if form.category %}
+          <div class="form-group">{{ form.category.label_tag }} {{ form.category }}</div>
+        {% endif %}
+        {% if form.amount %}
+          <div class="form-group">{{ form.amount.label_tag }} {{ form.amount }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if form.description %}
+      <div class="form-group">
+        {{ form.description.label_tag }}
+        {{ form.description }}
+      </div>
+    {% endif %}
+
+    {% if form.statement %}
+      <div class="form-group">
+        {{ form.statement.label_tag }}
+        {{ form.statement }}
+      </div>
+    {% endif %}
+
+    {% if form.date or form.last_four or form.credit_limit or form.balance or form.priority or form.min_amount %}
+      <div class="form-grid" style="margin-bottom:0;">
+        {% if form.date %}
+          <div class="form-group">{{ form.date.label_tag }} {{ form.date }}</div>
+        {% endif %}
+        {% if form.last_four %}
+          <div class="form-group">{{ form.last_four.label_tag }} {{ form.last_four }}</div>
+        {% endif %}
+        {% if form.credit_limit %}
+          <div class="form-group">{{ form.credit_limit.label_tag }} {{ form.credit_limit }}</div>
+        {% endif %}
+        {% if form.balance %}
+          <div class="form-group">{{ form.balance.label_tag }} {{ form.balance }}</div>
+        {% endif %}
+        {% if form.priority %}
+          <div class="form-group">{{ form.priority.label_tag }} {{ form.priority }}</div>
+        {% endif %}
+        {% if form.min_amount %}
+          <div class="form-group">{{ form.min_amount.label_tag }} {{ form.min_amount }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if form.icon or form.color or form.notes or form.receipt or form.recurring_period or form.is_active %}
+      {% if form.icon %}
+        <div class="form-group">{{ form.icon.label_tag }} {{ form.icon }}</div>
+      {% endif %}
+      {% if form.color %}
+        <div class="form-group">{{ form.color.label_tag }} {{ form.color }}</div>
+      {% endif %}
+      {% if form.notes %}
+        <div class="form-group">
+          {{ form.notes.label_tag }}
+          {{ form.notes }}
+        </div>
+      {% endif %}
+      {% if form.receipt %}
+        <div class="form-group">
+          {{ form.receipt.label_tag }}
+          {{ form.receipt }}
+        </div>
+      {% endif %}
+      {% if form.recurring_period %}
+        <div class="form-group">
+          {{ form.recurring_period.label_tag }}
+          {{ form.recurring_period }}
+        </div>
+      {% endif %}
+      {% if form.is_active %}
+        <div class="form-group checkbox-row">
+          <label class="checkbox-wrap" for="{{ form.is_active.id_for_label }}">
+            {{ form.is_active }}
+            <span>{{ form.is_active.label }}</span>
+          </label>
+        </div>
+      {% endif %}
+    {% endif %}
+
+    {% for field in form %}
+      {% if field.name not in 'transaction_type,account,name,account_type,keyword,match_type,category,amount,description,statement,date,last_four,credit_limit,balance,priority,min_amount,icon,color,notes,receipt,recurring_period,is_active' %}
+        <div class="form-group {% if field.field.widget.input_type == 'checkbox' %}checkbox-row{% endif %}">
+          {% if field.field.widget.input_type == 'checkbox' %}
+            <label class="checkbox-wrap" for="{{ field.id_for_label }}">
+              {{ field }}
+              <span>{{ field.label }}</span>
+            </label>
+          {% else %}
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+          {% endif %}
+
+          {% if field.help_text %}
+            <div class="form-help">{{ field.help_text }}</div>
+          {% endif %}
+
+          {% if field.errors %}
+            <div class="field-error">{{ field.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if field.errors and field.name in 'transaction_type,account,name,account_type,keyword,match_type,category,amount,description,statement,date,last_four,credit_limit,balance,priority,min_amount,icon,color,notes,receipt,recurring_period,is_active' %}
+        <div class="field-error">{{ field.errors|join:", " }}</div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+    <button type="submit" class="btn btn-primary">{{ submit_text }}</button>
+  </div>
+</form>
