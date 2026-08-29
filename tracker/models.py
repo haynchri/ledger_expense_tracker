@@ -59,12 +59,12 @@ class Category(models.Model):
     ]
 
     ICONS = [
-        ('🏠', 'Housing'), ('🚗', 'Transport'), ('🍔', 'Food'), ('💊', 'Health'),
-        ('🎮', 'Entertainment'), ('👕', 'Clothing'), ('🎓', 'Education'),
-        ('💼', 'Work'), ('💰', 'Income'), ('🛒', 'Shopping'), ('✈️', 'Travel'),
-        ('📱', 'Technology'), ('⚡', 'Utilities'), ('🎁', 'Gifts'), ('🐾', 'Pets'),
-        ('⛽', 'Fuel'), ('🏪', 'Grocery'), ('💡', 'Other'), ('🏢', 'Insurance'),
-        ('🎹', 'Piano'), ('🏊', 'Swimming'), ('💵', 'Subscriptions'), ('💳', 'Credit Card')
+        ('🏠', 'house'), ('🚗', 'automobile'), ('🍔', 'hamburger'), ('💊', 'pill'),
+        ('🎮', 'video game'), ('👕', 't-shirt'), ('🎓', 'graduation cap'),
+        ('💼', 'Work'), ('💰', 'money bag'), ('🛒', 'shopping cart'), ('✈️', 'airplane'),
+        ('📱', 'mobile phone'), ('⚡', 'high voltage'), ('🎁', 'wrapped gift'), ('🐾', 'paw prints'),
+        ('⛽', 'fuel pump'), ('🏪', 'convenience store'), ('💡', 'light bulb'), ('🏢', 'office building'),
+        ('🎹', 'musical keyboard'), ('🏊', 'person swimming'), ('💵', 'dollar banknote'), ('💳', 'credit card')
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='categories')
