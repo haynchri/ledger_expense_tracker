@@ -66,6 +66,134 @@
   border-bottom: 1px solid var(--border);
 }
 
+.forecast-intro {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-bottom: 20px;
+}
+
+.forecast-intro strong {
+  color: var(--text);
+}
+
+.forecast-swatch-income { background: var(--green); }
+.forecast-swatch-expense { background: var(--red); }
+.forecast-swatch-balance { background: var(--accent-light); }
+
+.forecast-period-sign {
+  margin-left: 4px;
+}
+
+.forecast-period-sign.positive { color: var(--green); }
+.forecast-period-sign.negative { color: var(--red); }
+
+.forecast-no-budget {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.forecast-total-row {
+  background: var(--surface2);
+}
+
+.forecast-total-label {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.forecast-net-label {
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.forecast-net-positive { color: var(--green); }
+.forecast-net-negative { color: var(--red); }
+
+.forecast-empty-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.forecast-chart-card {
+  margin-bottom: 24px;
+  padding: 22px;
+}
+
+.forecast-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.forecast-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.forecast-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.forecast-legend-swatch {
+  width: 10px;
+  height: 3px;
+  display: inline-block;
+  border-radius: 2px;
+}
+
+.forecast-legend-swatch.dashed {
+  border-style: dashed;
+}
+
+.forecast-meta-note {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.forecast-meta-note.small {
+  font-size: 0.7rem;
+}
+
+.forecast-panel-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.forecast-net-row {
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+}
+
+.forecast-net-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.forecast-net-value {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+}
+
+.forecast-intro-link {
+  color: var(--accent-light);
+}
+
 .horizon-btns { display: flex; gap: 6px; }
 
 .balance-chip {

@@ -9,14 +9,14 @@
 {% block content %}
 <div class="page-header">
   <h1 class="page-title">Category Rules</h1>
-  <div style="display: flex; gap: 10px;">
+  <div class="rule-toolbar">
     <a href="{% url 'rule_import' %}" class="btn btn-ghost">📤 Import</a>
     <a href="{% url 'rule_export' %}" class="btn btn-ghost">📥 Export</a>
     <a href="{% url 'rule_create' %}" class="btn btn-primary">+ Add Rule</a>
   </div>
 </div>
 
-<p style="color:var(--muted); font-size:0.88rem; margin-bottom:20px;">
+<p class="rule-intro">
   Rules automatically assign categories to transactions based on their description.
   Rules are checked in priority order — the first match wins.
 </p>
@@ -49,7 +49,7 @@
 
 <!-- Rules table -->
 {% if rule_stats %}
-<div class="card" style="padding:0; overflow:hidden;">
+<div class="card table-card">
   <div class="col-header">
     <span>Keyword</span>
     <span>Match Type</span>
@@ -67,7 +67,7 @@
     <div>
       <span class="rule-keyword" title="{{ stat.rule.keyword }}">{{ stat.rule.keyword }}</span>
       {% if not stat.rule.is_active %}
-        <span style="font-size:0.7rem; color:var(--muted); margin-left:6px;">inactive</span>
+        <span class="inactive-tag">inactive</span>
       {% endif %}
     </div>
 
@@ -86,9 +86,9 @@
     <!-- Min amount -->
     <div>
       {% if stat.rule.min_amount %}
-        <span style="font-size:0.82rem; color:var(--text); font-weight:600;">≥ ${{ stat.rule.min_amount|floatformat:2 }}</span>
+        <span class="rule-min-amount">≥ ${{ stat.rule.min_amount|floatformat:2 }}</span>
       {% else %}
-        <span style="font-size:0.78rem; color:var(--muted);">any</span>
+        <span class="rule-min-any">any</span>
       {% endif %}
     </div>
 
@@ -112,7 +112,7 @@
   {% endfor %}
 </div>
 
-<p style="margin-top:12px; font-size:0.78rem; color:var(--muted);">
+<p class="rule-summary-note">
   {{ rule_stats|length }} rule{{ rule_stats|length|pluralize }} · Inactive rules are dimmed and skipped when applying.
 </p>
 

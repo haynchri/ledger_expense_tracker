@@ -27,10 +27,10 @@
               {{ cat.icon }} {{ cat.name }}
             </span>
           </td>
-          <td style="color:var(--muted); font-size:0.85rem;">{{ cat.get_category_type_display }}</td>
-          <td style="color:var(--muted); font-size:0.85rem;">{{ cat.transactions.count }}</td>
+          <td class="muted-stat-cell">{{ cat.get_category_type_display }}</td>
+          <td class="muted-stat-cell">{{ cat.transactions.count }}</td>
           <td>
-            <div style="display:flex; gap:6px; justify-content:flex-end;">
+            <div class="table-actions-end">
               <a href="{% url 'category_edit' cat.pk %}" data-modal-url="{% url 'category_edit' cat.pk %}" class="btn btn-ghost btn-sm">Edit</a>
               <a href="{% url 'category_delete' cat.pk %}" data-modal-url="{% url 'category_delete' cat.pk %}" class="btn btn-danger btn-sm">Delete</a>
             </div>

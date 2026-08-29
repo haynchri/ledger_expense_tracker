@@ -15,17 +15,17 @@
   <div class="step"><div class="step-num">3</div><span>Done</span></div>
 </div>
 
-<div class="page-header" style="margin-bottom:18px;">
+<div class="page-header import-page-header">
   <h1 class="page-title">Import Category Rules</h1>
   <a href="{% url 'rule_list' %}" class="btn btn-ghost">← Cancel</a>
 </div>
 
-<p style="color:var(--muted); font-size:.88rem; margin-bottom:24px;">
+<p class="csv-rule-intro">
   Upload any CSV file with rules — you'll map your column headers to the right fields on the next screen.
   Perfect for backing up and restoring your rules or sharing them with others.
 </p>
 
-<div style="max-width:560px;">
+<div class="import-shell">
   <div class="card">
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
@@ -36,24 +36,24 @@
           <div class="upload-icon">📂</div>
           <div class="upload-label">Click to browse or drag &amp; drop</div>
           <div class="upload-hint">Supports .csv files · Exported from the Export button or any custom format</div>
-          <div class="file-chosen" id="file-chosen" style="display:none;"></div>
+          <div class="file-chosen hidden-file-chosen" id="file-chosen"></div>
         </div>
-        {% if form.csv_file.errors %}<div style="color:var(--red);font-size:.8rem;margin-top:4px;">{{ form.csv_file.errors.0 }}</div>{% endif %}
+        {% if form.csv_file.errors %}<div class="csv-form-error">{{ form.csv_file.errors.0 }}</div>{% endif %}
       </div>
-      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;">
+      <button type="submit" class="btn btn-primary import-button">
         Next: Map Columns →
       </button>
     </form>
   </div>
 
-  <div class="card" style="margin-top:16px;padding:18px;">
-    <div style="font-family:var(--font-heading);font-size:1rem;margin-bottom:10px;">💡 Tips</div>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <div style="display:flex;gap:8px;font-size:.83rem;color:var(--muted);"><span style="color:var(--green);flex-shrink:0;">✓</span> Your CSV must have a <strong style="color:var(--text);">header row</strong> in the first row.</div>
-      <div style="display:flex;gap:8px;font-size:.83rem;color:var(--muted);"><span style="color:var(--green);flex-shrink:0;">✓</span> Required columns: <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;color:var(--accent-light);">keyword</code>, <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;color:var(--accent-light);">category</code></div>
-      <div style="display:flex;gap:8px;font-size:.83rem;color:var(--muted);"><span style="color:var(--green);flex-shrink:0;">✓</span> Optional columns: <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;color:var(--accent-light);">match_type</code>, <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;color:var(--accent-light);">min_amount</code>, <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;color:var(--accent-light);">priority</code></div>
-      <div style="display:flex;gap:8px;font-size:.83rem;color:var(--muted);"><span style="color:var(--green);flex-shrink:0;">✓</span> Categories must exist in your account — they won't be auto-created.</div>
-      <div style="display:flex;gap:8px;font-size:.83rem;color:var(--muted);"><span style="color:var(--green);flex-shrink:0;">✓</span> Duplicate rules (same keyword + match_type) will be skipped.</div>
+  <div class="card import-tips-card">
+    <div class="section-heading">💡 Tips</div>
+    <div class="import-tips-list">
+      <div class="import-tip"><span class="import-tip-check">✓</span> Your CSV must have a <strong>header row</strong> in the first row.</div>
+      <div class="import-tip"><span class="import-tip-check">✓</span> Required columns: <code class="import-tip-code">keyword</code>, <code class="import-tip-code">category</code></div>
+      <div class="import-tip"><span class="import-tip-check">✓</span> Optional columns: <code class="import-tip-code">match_type</code>, <code class="import-tip-code">min_amount</code>, <code class="import-tip-code">priority</code></div>
+      <div class="import-tip"><span class="import-tip-check">✓</span> Categories must exist in your account — they won't be auto-created.</div>
+      <div class="import-tip"><span class="import-tip-check">✓</span> Duplicate rules (same keyword + match_type) will be skipped.</div>
     </div>
   </div>
 </div>

@@ -10,34 +10,34 @@
 {% block content %}
 <div class="page-header">
   <h1 class="page-title">Transactions</h1>
-  <div style="display:flex; gap:10px;">
+  <div class="rule-toolbar">
     <a href="{% url 'csv_export' %}?{{ request.GET.urlencode }}" class="btn btn-ghost">📤 Export</a>
     <a href="{% url 'transaction_create' %}" data-modal-url="{% url 'transaction_create' %}" class="btn btn-primary">+ Add Transaction</a>
   </div>
 </div>
 
 <!-- Summary bar -->
-<div class="stats-grid" style="margin-bottom:20px;">
+<div class="stats-grid transaction-summary-grid">
   <div class="stat-card card-sm">
     <div class="stat-label">Income (filtered)</div>
-    <div class="stat-value green" style="font-size:1.4rem;">+${{ total_income|floatformat:2 }}</div>
+    <div class="stat-value green stat-amount-lg">+${{ total_income|floatformat:2 }}</div>
   </div>
   <div class="stat-card card-sm">
     <div class="stat-label">Expenses (filtered)</div>
-    <div class="stat-value red" style="font-size:1.4rem;">-${{ total_expense|floatformat:2 }}</div>
+    <div class="stat-value red stat-amount-lg">-${{ total_expense|floatformat:2 }}</div>
   </div>
   <div class="stat-card card-sm">
     <div class="stat-label">Net</div>
-    <div class="stat-value {% if net >= 0 %}green{% else %}red{% endif %}" style="font-size:1.4rem;">
+    <div class="stat-value {% if net >= 0 %}green{% else %}red{% endif %} stat-amount-lg">
       {% if net >= 0 %}+{% endif %}${{ net|floatformat:2 }}
     </div>
   </div>
 </div>
 
 <!-- Filters -->
-<div class="card" style="margin-bottom:20px;">
+<div class="card transaction-filter-card">
   <form method="get">
-    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:12px; align-items:end;">
+    <div class="filter-form-grid">
       <div>
         <label class="form-label">Account</label>
         {{ filter_form.account }}
@@ -62,8 +62,8 @@
         <label class="form-label">Search</label>
         {{ filter_form.search }}
       </div>
-      <div style="display:flex; gap:8px;">
-        <button type="submit" class="btn btn-primary btn-sm" style="flex:1;">Filter</button>
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary btn-sm filter-submit">Filter</button>
         <a href="{% url 'transaction_list' %}" class="btn btn-ghost btn-sm">Clear</a>
       </div>
     </div>
@@ -71,7 +71,7 @@
 </div>
 
 <!-- Table -->
-<div class="card" style="padding:0; overflow:hidden;">
+<div class="card table-card">
   {% if transactions %}
   <div class="table-wrap">
     <table>

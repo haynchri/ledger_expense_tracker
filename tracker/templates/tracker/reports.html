@@ -7,15 +7,15 @@
 </div>
 
 <!-- Month selector -->
-<div class="card" style="margin-bottom:20px;">
-  <form method="get" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-    <label class="form-label" style="margin:0;">Month:</label>
-    <select name="month" class="form-input" style="width:140px;">
+<div class="card reports-filter-card">
+  <form method="get" class="reports-filter-form">
+    <label class="form-label reports-filter-label">Month:</label>
+    <select name="month" class="form-input reports-filter-select">
       {% for num, name in months %}
       <option value="{{ num }}" {% if num == selected_month %}selected{% endif %}>{{ name }}</option>
       {% endfor %}
     </select>
-    <select name="year" class="form-input" style="width:100px;">
+    <select name="year" class="form-input reports-year-select">
       {% for y in years %}
       <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
       {% endfor %}
@@ -25,7 +25,7 @@
 </div>
 
 <!-- Summary -->
-<div class="stats-grid" style="margin-bottom:24px;">
+<div class="stats-grid reports-summary-grid">
   <div class="stat-card">
     <div class="stat-label">Total Income</div>
     <div class="stat-value green">+${{ income_total|floatformat:2 }}</div>
@@ -42,47 +42,47 @@
   </div>
 </div>
 
-<div class="two-col" style="margin-bottom:24px;">
+<div class="two-col reports-layout">
   <!-- Doughnut chart -->
   <div class="card">
-    <h2 style="font-family:var(--font-heading); font-size:1.1rem; margin-bottom:16px;">Spending by Category</h2>
+    <h2 class="section-heading">Spending by Category</h2>
     {% if by_category %}
-    <div style="max-width:320px; margin:0 auto;">
+    <div class="reports-chart-wrap">
       <canvas id="donutChart" data-chart-data='{{ chart_data_json|safe }}'></canvas>
     </div>
     {% else %}
-    <div style="text-align:center; color:var(--muted); padding:40px 0;">No expense data for this month.</div>
+    <div class="reports-empty-state">No expense data for this month.</div>
     {% endif %}
   </div>
 
   <!-- Category breakdown table -->
   <div class="card">
-    <h2 style="font-family:var(--font-heading); font-size:1.1rem; margin-bottom:16px;">Category Breakdown</h2>
+    <h2 class="section-heading">Category Breakdown</h2>
     {% if by_category %}
     {% for cat in by_category %}
-    <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border);">
-      <span style="font-size:1.1rem; width:24px;">{{ cat.category__icon|default:"💡" }}</span>
-      <div style="flex:1;">
-        <div style="font-size:0.88rem; font-weight:500;">{{ cat.category__name|default:"Uncategorized" }}</div>
-        <div style="height:4px; background:var(--surface2); border-radius:2px; margin-top:4px;">
-          <div style="height:4px; border-radius:2px; background:{{ cat.category__color|default:'#6B7280' }}; width:{% widthratio cat.total expense_total 100 %}%;"></div>
+    <div class="reports-category-row">
+      <span class="reports-category-icon">{{ cat.category__icon|default:"💡" }}</span>
+      <div class="reports-category-main">
+        <div class="reports-category-name">{{ cat.category__name|default:"Uncategorized" }}</div>
+        <div class="reports-category-bar">
+          <div class="reports-category-fill" style="background:{{ cat.category__color|default:'#6B7280' }}; width:{% widthratio cat.total expense_total 100 %}%;"></div>
         </div>
       </div>
-      <div style="text-align:right; font-size:0.88rem;">
-        <div style="font-weight:600; color:var(--red);">${{ cat.total|floatformat:2 }}</div>
-        <div style="color:var(--muted); font-size:0.75rem;">{% widthratio cat.total expense_total 100 %}%</div>
+      <div class="reports-category-total">
+        <div class="reports-category-total-amount">${{ cat.total|floatformat:2 }}</div>
+        <div class="reports-category-total-percent">{% widthratio cat.total expense_total 100 %}%</div>
       </div>
     </div>
     {% endfor %}
     {% else %}
-    <div style="color:var(--muted); padding:30px 0; text-align:center;">No expenses this month.</div>
+    <div class="reports-empty-state compact">No expenses this month.</div>
     {% endif %}
   </div>
 </div>
 
 <!-- By account -->
 <div class="card">
-  <h2 style="font-family:var(--font-heading); font-size:1.1rem; margin-bottom:16px;">Activity by Account</h2>
+  <h2 class="section-heading">Activity by Account</h2>
   {% if by_account %}
   <div class="table-wrap">
     <table>
@@ -90,19 +90,19 @@
         <tr>
           <th>Account</th>
           <th>Type</th>
-          <th style="text-align:right; color:var(--green);">Income</th>
-          <th style="text-align:right; color:var(--red);">Expenses</th>
-          <th style="text-align:right;">Net</th>
+          <th class="reports-account-head income">Income</th>
+          <th class="reports-account-head expense">Expenses</th>
+          <th class="reports-account-head net">Net</th>
         </tr>
       </thead>
       <tbody>
         {% for row in by_account %}
         <tr>
-          <td style="font-weight:500;">{{ row.account__name }}</td>
-          <td style="color:var(--muted); font-size:0.82rem;">{{ row.account__account_type|title }}</td>
-          <td style="text-align:right; color:var(--green);">+${{ row.income|default:0|floatformat:2 }}</td>
-          <td style="text-align:right; color:var(--red);">-${{ row.expense|default:0|floatformat:2 }}</td>
-          <td style="text-align:right; font-weight:600;">
+          <td class="reports-account-name">{{ row.account__name }}</td>
+          <td class="reports-account-type">{{ row.account__account_type|title }}</td>
+          <td class="reports-account-value income">+${{ row.income|default:0|floatformat:2 }}</td>
+          <td class="reports-account-value expense">-${{ row.expense|default:0|floatformat:2 }}</td>
+          <td class="reports-account-net">
             {% with net_row=row.net|default:0%}
             ${{ net_row|floatformat:2 }}
             {% endwith %}
@@ -113,7 +113,7 @@
     </table>
   </div>
   {% else %}
-  <div style="color:var(--muted); padding:30px; text-align:center;">No data for this period.</div>
+  <div class="reports-empty-state large">No data for this period.</div>
   {% endif %}
 </div>
 {% endblock %}

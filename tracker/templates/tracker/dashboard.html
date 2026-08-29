@@ -30,37 +30,37 @@
 </div>
 
 <!-- Accounts + Category Spending -->
-<div class="two-col" style="margin-bottom: 24px;">
+<div class="two-col dashboard-section">
   <!-- Accounts -->
   <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <h2 style="font-family:var(--font-heading); font-size:1.1rem;">Accounts</h2>
-      <a href="{% url 'account_create' %}" style="font-size:0.8rem; color:var(--accent-light); text-decoration:none;">+ Add</a>
+    <div class="panel-header">
+      <h2>Accounts</h2>
+      <a href="{% url 'account_create' %}" class="panel-link">+ Add</a>
     </div>
     {% if accounts %}
       {% for account in accounts %}
-      <a href="{% url 'account_detail' account.pk %}" style="text-decoration:none;">
-        <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border);">
-          <div style="width:38px; height:38px; border-radius:10px; background:{{ account.color }}22; border:1px solid {{ account.color }}44; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+      <a href="{% url 'account_detail' account.pk %}" class="dashboard-account-link">
+        <div class="dashboard-account-row">
+          <div class="dashboard-account-icon" style="background:{{ account.color }}22; border:1px solid {{ account.color }}44;">
             {% if account.account_type == 'credit_card' %}💳{% elif account.account_type == 'savings' %}🏦{% else %}🏧{% endif %}
           </div>
-          <div style="flex:1;">
-            <div style="font-size:0.9rem; font-weight:600; color:var(--text);">{{ account.name }}</div>
-            <div style="font-size:0.75rem; color:var(--muted);">{{ account.get_account_type_display }}{% if account.last_four %} ····{{ account.last_four }}{% endif %}</div>
+          <div class="dashboard-account-main">
+            <div class="dashboard-account-name">{{ account.name }}</div>
+            <div class="dashboard-account-meta">{{ account.get_account_type_display }}{% if account.last_four %} ····{{ account.last_four }}{% endif %}</div>
           </div>
-          <div style="text-align:right;">
-            <div style="font-weight:600; color:{% if account.balance >= 0 %}var(--green){% else %}var(--red){% endif %};">
+          <div class="text-right">
+            <div class="dashboard-account-balance" style="color:{% if account.balance >= 0 %}var(--green){% else %}var(--red){% endif %};">
               ${{ account.balance|floatformat:2 }}
             </div>
             {% if account.available_credit %}
-            <div style="font-size:0.72rem; color:var(--muted);">Avail: ${{ account.available_credit|floatformat:0 }}</div>
+            <div class="dashboard-account-available">Avail: ${{ account.available_credit|floatformat:0 }}</div>
             {% endif %}
           </div>
         </div>
       </a>
       {% endfor %}
     {% else %}
-      <div class="empty-state" style="padding:30px 0;">
+      <div class="empty-state dashboard-empty-state">
         <div class="empty-icon">🏦</div>
         <p>No accounts yet</p>
         <a href="{% url 'account_create' %}" class="btn btn-primary btn-sm">Add Account</a>
@@ -70,30 +70,30 @@
 
   <!-- Category spending -->
   <div class="card">
-    <h2 style="font-family:var(--font-heading); font-size:1.1rem; margin-bottom:16px;">Top Spending This Month</h2>
+    <h2 class="section-heading">Top Spending This Month</h2>
     {% if category_spending %}
       {% for cat in category_spending %}
-      <div style="margin-bottom:12px;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-          <span style="font-size:0.85rem;">{{ cat.category__icon|default:"💡" }} {{ cat.category__name|default:"Uncategorized" }}</span>
-          <span style="font-size:0.85rem; font-weight:600; color:var(--red);">${{ cat.total|floatformat:2 }}</span>
+      <div class="dashboard-spending-item">
+        <div class="dashboard-spending-row">
+          <span class="dashboard-spending-label">{{ cat.category__icon|default:"💡" }} {{ cat.category__name|default:"Uncategorized" }}</span>
+          <span class="dashboard-spending-value">${{ cat.total|floatformat:2 }}</span>
         </div>
-        <div style="height:5px; background:var(--surface2); border-radius:3px;">
-          <div style="height:5px; border-radius:3px; background:{{ cat.category__color|default:'#6B7280' }}; width:{% widthratio cat.total monthly_expense 100 %}%;"></div>
+        <div class="dashboard-spending-bar">
+          <div class="dashboard-spending-fill" style="background:{{ cat.category__color|default:'#6B7280' }}; width:{% widthratio cat.total monthly_expense 100 %}%;"></div>
         </div>
       </div>
       {% endfor %}
     {% else %}
-      <div style="color:var(--muted); font-size:0.88rem; padding:20px 0; text-align:center;">No expenses this month yet.</div>
+      <div class="dashboard-empty-state muted-inline-note">No expenses this month yet.</div>
     {% endif %}
   </div>
 </div>
 
 <!-- Chart -->
-<div class="card" style="margin-bottom:24px;">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h2 style="font-family:var(--font-heading); font-size:1.1rem;">6-Month Overview</h2>
-    <select id="categoryFilter" data-dashboard-url="{% url 'dashboard_chart_data' %}" style="padding:6px 10px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:0.85rem; cursor:pointer;">
+<div class="card dashboard-chart-card">
+  <div class="panel-header dashboard-chart-header">
+    <h2>6-Month Overview</h2>
+    <select id="categoryFilter" class="dashboard-filter" data-dashboard-url="{% url 'dashboard_chart_data' %}">
       <option value="">All Categories</option>
       {% for category in categories %}
       <option value="{{ category.id }}">{{ category.icon }} {{ category.name }}</option>
@@ -105,9 +105,9 @@
 
 <!-- Recent Transactions -->
 <div class="card">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-    <h2 style="font-family:var(--font-heading); font-size:1.1rem;">Recent Transactions</h2>
-    <a href="{% url 'transaction_list' %}" style="font-size:0.8rem; color:var(--accent-light); text-decoration:none;">View all →</a>
+  <div class="panel-header">
+    <h2>Recent Transactions</h2>
+    <a href="{% url 'transaction_list' %}" class="panel-link">View all →</a>
   </div>
   {% if recent_transactions %}
   <div class="table-wrap">
@@ -118,17 +118,17 @@
           <th>Description</th>
           <th>Account</th>
           <th>Category</th>
-          <th style="text-align:right;">Amount</th>
+          <th class="text-right">Amount</th>
         </tr>
       </thead>
       <tbody>
         {% for txn in recent_transactions %}
         <tr>
-          <td style="color:var(--muted); font-size:0.82rem;">{{ txn.date }}</td>
+          <td class="dashboard-table-date">{{ txn.date }}</td>
           <td>{{ txn.description }}</td>
           <td>
-            <span style="display:inline-flex; align-items:center; gap:6px;">
-              <span class="account-dot" style="background:{{ txn.account.color }};"></span>
+            <span class="dashboard-account-pill">
+              <span class="dashboard-account-dot" style="background:{{ txn.account.color }};"></span>
               {{ txn.account.name }}
             </span>
           </td>
@@ -137,9 +137,9 @@
             <span class="cat-pill" style="background:{{ txn.category.color }}22; color:{{ txn.category.color }};">
               {{ txn.category.icon }} {{ txn.category.name }}
             </span>
-            {% else %}<span style="color:var(--muted);">—</span>{% endif %}
+            {% else %}<span class="muted-inline-note">—</span>{% endif %}
           </td>
-          <td style="text-align:right;">
+          <td class="text-right">
             <span class="{% if txn.transaction_type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
               {% if txn.transaction_type == 'income' %}+{% else %}−{% endif %}${{ txn.amount|floatformat:2 }}
             </span>

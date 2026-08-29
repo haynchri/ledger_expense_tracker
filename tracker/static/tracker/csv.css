@@ -1,3 +1,70 @@
+.csv-import-intro {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-bottom: 24px;
+}
+
+.import-page-header {
+  margin-bottom: 18px;
+}
+
+.import-shell {
+  max-width: 560px;
+}
+
+.csv-form-error {
+  color: var(--red);
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.csv-rule-intro {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-bottom: 24px;
+}
+
+.import-button {
+  width: 100%;
+  justify-content: center;
+  padding: 12px;
+}
+
+.import-tips-card {
+  margin-top: 16px;
+  padding: 18px;
+}
+
+.import-tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.import-tip {
+  display: flex;
+  gap: 8px;
+  font-size: 0.83rem;
+  color: var(--muted);
+}
+
+.import-tip-check {
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.import-tip code,
+.import-tip strong {
+  color: var(--text);
+}
+
+.import-tip code {
+  background: var(--surface2);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--accent-light);
+}
+
 .step-bar { display:flex; align-items:center; gap:0; margin-bottom:28px; }
 .step { display:flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:600; color:var(--muted); }
 .step.active .step-num { background:var(--accent); color:#fff; }

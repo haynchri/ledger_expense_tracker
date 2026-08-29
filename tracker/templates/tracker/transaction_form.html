@@ -7,12 +7,12 @@
   <a href="{% url 'transaction_list' %}" class="btn btn-ghost">← Back</a>
 </div>
 
-<div style="max-width:640px;">
+<div class="form-shell wide">
   <div class="card">
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
 
-      <div class="form-grid" style="margin-bottom:0;">
+      <div class="form-grid compact-grid">
         <div class="form-group">
           <label class="form-label">Type *</label>
           {{ form.transaction_type }}
@@ -33,7 +33,7 @@
         {{ form.statement }}
       </div>
 
-      <div class="form-grid" style="margin-bottom:0;">
+      <div class="form-grid compact-grid">
         <div class="form-group">
           <label class="form-label">Amount ($) *</label>
           {{ form.amount }}
@@ -59,27 +59,27 @@
         {{ form.receipt }}
         <div class="form-help">Upload a photo or PDF of the receipt (optional).</div>
         {% if form.instance.receipt %}
-        <div style="margin-top:6px; font-size:0.8rem; color:var(--accent-light);">
+        <div class="form-attachment-note">
           Current: <a href="{{ form.instance.receipt.url }}" target="_blank">{{ form.instance.receipt.name }}</a>
         </div>
         {% endif %}
       </div>
 
       <div class="form-group">
-        <label style="font-size:0.88rem; display:block; margin-bottom:6px;">Recurrence Period</label>
+        <label class="recurrence-label">Recurrence Period</label>
         {{ form.recurring_period }}
         <div class="form-help">Leave blank for non-recurring transactions. Quarterly and Yearly are divided across 12 months.</div>
       </div>
 
       {% if form.errors %}
-      <div style="background:rgba(248,113,113,0.1); border:1px solid var(--red); border-radius:8px; padding:12px; margin-bottom:16px; font-size:0.85rem; color:var(--red);">
+      <div class="form-alert">
         {% for field, errors in form.errors.items %}
           {% for error in errors %}<div>{{ field }}: {{ error }}</div>{% endfor %}
         {% endfor %}
       </div>
       {% endif %}
 
-      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+      <div class="form-inline-actions">
         <a href="{% url 'transaction_list' %}" class="btn btn-ghost">Cancel</a>
         <button type="submit" class="btn btn-primary">
           {% if txn %}Save Changes{% else %}Add Transaction{% endif %}

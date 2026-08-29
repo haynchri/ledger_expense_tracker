@@ -7,7 +7,7 @@
   <a href="{% url 'account_list' %}" class="btn btn-ghost">← Back</a>
 </div>
 
-<div style="max-width:520px;">
+<div class="form-shell">
   <div class="card">
     <form method="post">
       {% csrf_token %}
@@ -15,7 +15,7 @@
         <label class="form-label">Account Name *</label>
         {{ form.name }}
       </div>
-      <div class="form-grid" style="margin-bottom:0;">
+      <div class="form-grid compact-grid">
         <div class="form-group">
           <label class="form-label">Account Type *</label>
           {{ form.account_type }}
@@ -25,7 +25,7 @@
           {{ form.last_four }}
         </div>
       </div>
-      <div class="form-grid" style="margin-bottom:0;">
+      <div class="form-grid compact-grid">
         <div class="form-group">
           <label class="form-label">Opening Balance ($)</label>
           {{ form.balance }}
@@ -41,11 +41,11 @@
         {{ form.color }}
       </div>
       {% if form.errors %}
-      <div style="background:rgba(248,113,113,0.1); border:1px solid var(--red); border-radius:8px; padding:12px; margin-bottom:16px; font-size:0.85rem; color:var(--red);">
+      <div class="form-alert">
         {% for field, errors in form.errors.items %}{% for error in errors %}<div>{{ field }}: {{ error }}</div>{% endfor %}{% endfor %}
       </div>
       {% endif %}
-      <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <div class="form-actions">
         <a href="{% url 'account_list' %}" class="btn btn-ghost">Cancel</a>
         <button type="submit" class="btn btn-primary">{% if account %}Save Changes{% else %}Create Account{% endif %}</button>
       </div>

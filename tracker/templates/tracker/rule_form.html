@@ -12,7 +12,7 @@
   <a href="{% url 'rule_list' %}" class="btn btn-ghost">← Back to Rules</a>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; max-width: 900px;">
+<div class="rule-layout">
 
   <!-- Form -->
   <div class="card">
@@ -23,48 +23,48 @@
         <label class="form-label">Keyword *</label>
         {{ form.keyword }}
         <div class="form-help">The text to match in transaction descriptions (case-insensitive).</div>
-        {% if form.keyword.errors %}<div style="color:var(--red);font-size:.8rem;margin-top:3px;">{{ form.keyword.errors.0 }}</div>{% endif %}
+        {% if form.keyword.errors %}<div class="field-error-inline">{{ form.keyword.errors.0 }}</div>{% endif %}
       </div>
 
-      <div class="form-grid" style="margin-bottom:0;">
+      <div class="form-grid compact-grid">
         <div class="form-group">
           <label class="form-label">Match Type *</label>
           {{ form.match_type }}
-          {% if form.match_type.errors %}<div style="color:var(--red);font-size:.8rem;margin-top:3px;">{{ form.match_type.errors.0 }}</div>{% endif %}
+          {% if form.match_type.errors %}<div class="field-error-inline">{{ form.match_type.errors.0 }}</div>{% endif %}
         </div>
         <div class="form-group">
           <label class="form-label">Assign Category *</label>
           {{ form.category }}
-          {% if form.category.errors %}<div style="color:var(--red);font-size:.8rem;margin-top:3px;">{{ form.category.errors.0 }}</div>{% endif %}
+          {% if form.category.errors %}<div class="field-error-inline">{{ form.category.errors.0 }}</div>{% endif %}
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Minimum Amount ($) <span style="color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0;">— optional</span></label>
+        <label class="form-label">Minimum Amount ($) <span class="optional-label">— optional</span></label>
         {{ form.min_amount }}
         <div class="form-help">Only match transactions with an amount at or above this value. Leave blank to match any amount.</div>
-        {% if form.min_amount.errors %}<div style="color:var(--red);font-size:.8rem;margin-top:3px;">{{ form.min_amount.errors.0 }}</div>{% endif %}
+        {% if form.min_amount.errors %}<div class="field-error-inline">{{ form.min_amount.errors.0 }}</div>{% endif %}
       </div>
 
-      <div class="form-grid" style="margin-bottom:0;">
+      <div class="form-grid compact-grid">
         <div class="form-group">
           <label class="form-label">Priority</label>
           {{ form.priority }}
           <div class="form-help">Lower = checked first. Default is 10.</div>
         </div>
-        <div class="form-group" style="display:flex; align-items:flex-end; gap:10px; padding-bottom:2px;">
+        <div class="form-group rule-toggle-row">
           {{ form.is_active }}
-          <label style="font-size:.88rem; cursor:pointer; margin-bottom:0;">Rule is active</label>
+          <label class="rule-toggle-label">Rule is active</label>
         </div>
       </div>
 
       {% if form.non_field_errors %}
-      <div style="background:rgba(248,113,113,0.1); border:1px solid var(--red); border-radius:8px; padding:10px 14px; margin-bottom:12px; font-size:.84rem; color:var(--red);">
+      <div class="rule-form-alert">
         {% for err in form.non_field_errors %}{{ err }}{% endfor %}
       </div>
       {% endif %}
 
-      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+      <div class="rule-actions-row">
         <a href="{% url 'rule_list' %}" class="btn btn-ghost">Cancel</a>
         <button type="submit" class="btn btn-primary">{% if rule %}Save Changes{% else %}Create Rule{% endif %}</button>
       </div>
@@ -80,13 +80,13 @@
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px; padding:16px;">
-      <div style="font-family:var(--font-heading); font-size:0.95rem; margin-bottom:8px;">💡 Examples</div>
-      <div style="font-size:0.8rem; color:var(--muted); display:flex; flex-direction:column; gap:6px;">
-        <div><code style="background:var(--surface2); padding:1px 5px; border-radius:4px; color:var(--accent-light);">AMAZON</code> → catches all Amazon transactions</div>
-        <div><code style="background:var(--surface2); padding:1px 5px; border-radius:4px; color:var(--accent-light);">SALARY</code> → payroll deposits that include "SALARY"</div>
-        <div><code style="background:var(--surface2); padding:1px 5px; border-radius:4px; color:var(--accent-light);">netflix|hulu|spotify</code> with Regex → all streaming</div>
-        <div><code style="background:var(--surface2); padding:1px 5px; border-radius:4px; color:var(--accent-light);">WHOLE FOODS</code> contains → grocery purchases</div>
+    <div class="card rule-preview-card">
+      <div class="rule-example-label">💡 Examples</div>
+      <div class="rule-example-list">
+        <div><code class="rule-example-code">AMAZON</code> → catches all Amazon transactions</div>
+        <div><code class="rule-example-code">SALARY</code> → payroll deposits that include "SALARY"</div>
+        <div><code class="rule-example-code">netflix|hulu|spotify</code> with Regex → all streaming</div>
+        <div><code class="rule-example-code">WHOLE FOODS</code> contains → grocery purchases</div>
       </div>
     </div>
   </div>

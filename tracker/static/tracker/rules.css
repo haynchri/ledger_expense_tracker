@@ -1,3 +1,71 @@
+.rule-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+  align-items: start;
+  max-width: 900px;
+}
+
+.rule-form-grid {
+  margin-bottom: 0;
+}
+
+.rule-toggle-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding-bottom: 2px;
+}
+
+.rule-toggle-label {
+  font-size: 0.88rem;
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+.rule-form-alert {
+  background: rgba(248,113,113,0.1);
+  border: 1px solid var(--red);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 0.84rem;
+  color: var(--red);
+}
+
+.rule-actions-row {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.rule-preview-card {
+  margin-top: 16px;
+  padding: 16px;
+}
+
+.rule-example-label {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.rule-example-list {
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rule-example-code {
+  background: var(--surface2);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--accent-light);
+}
+
 .preview-panel {
   background: var(--surface2);
   border: 1px solid var(--border);

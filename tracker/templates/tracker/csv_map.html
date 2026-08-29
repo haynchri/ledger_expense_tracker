@@ -26,18 +26,18 @@
   </div>
 </div>
 
-<div class="page-header" style="margin-bottom:18px;">
+<div class="page-header subpage-header">
   <h1 class="page-title">Map Your CSV Columns</h1>
   <a href="{% url 'csv_import' %}" class="btn btn-ghost">← Start Over</a>
 </div>
 
-<p style="color:var(--muted); font-size:0.88rem; margin-bottom:22px;">
-  Importing into <strong style="color:var(--accent-light);">{{ account.name }}</strong>.
+<p class="section-intro">
+  Importing into <strong class="inline-brand">{{ account.name }}</strong>.
   Match each required field on the left to the column in your file on the right.
   Auto-detected matches are pre-filled — just review and confirm.
 </p>
 
-<div style="display:grid; grid-template-columns: 1fr 420px; gap:24px; align-items:start;">
+<div class="csv-mapping-layout">
 
   <!-- LEFT: mapping form -->
   <div>
@@ -45,13 +45,13 @@
       {% csrf_token %}
 
       <!-- Sign rule info banner -->
-      <div style="display:flex; align-items:flex-start; gap:12px; background:rgba(124,106,247,0.08); border:1px solid rgba(124,106,247,0.25); border-radius:10px; padding:14px 16px; margin-bottom:22px;">
-        <span style="font-size:1.2rem; flex-shrink:0;">⚡</span>
+      <div class="csv-import-banner">
+        <span class="icon">⚡</span>
         <div>
-          <div style="font-weight:600; font-size:0.88rem; color:var(--accent-light); margin-bottom:3px;">Type is determined automatically from the amount</div>
-          <div style="font-size:0.82rem; color:var(--muted);">
-            <span style="color:var(--green); font-weight:600;">Positive amount</span> → Income &nbsp;·&nbsp;
-            <span style="color:var(--red); font-weight:600;">Negative amount</span> → Expense
+          <div class="title">Type is determined automatically from the amount</div>
+          <div class="body">
+            <span class="positive">Positive amount</span> → Income &nbsp;·&nbsp;
+            <span class="negative">Negative amount</span> → Expense
           </div>
         </div>
       </div>
@@ -86,9 +86,9 @@
       {% endwith %}
       {% endfor %}
 
-      <div style="display:flex; gap:12px; margin-top:24px;">
+      <div class="form-actions top-gap">
         <a href="{% url 'csv_import' %}" class="btn btn-ghost">← Back</a>
-        <button type="submit" class="btn btn-primary" style="flex:1; justify-content:center;">
+        <button type="submit" class="btn btn-primary submit-action-wide">
           ✓ Confirm &amp; Import Transactions
         </button>
       </div>
@@ -97,10 +97,10 @@
 
   <!-- RIGHT: preview panel -->
   <div>
-    <div class="card" style="padding:18px;">
-      <div class="section-heading" style="margin-bottom:10px;">👁 File Preview <span style="font-size:0.75rem; color:var(--muted); font-family:var(--font-body); font-weight:400;">(first 5 rows)</span></div>
+    <div class="card preview-card">
+      <div class="section-heading">👁 File Preview <span class="subtle-caption">(first 5 rows)</span></div>
       {% if preview_rows %}
-      <div style="overflow-x:auto;">
+      <div class="preview-card preview-table-wrap">
         <table class="preview-table">
           <thead>
             <tr>
@@ -119,11 +119,11 @@
       {% endif %}
     </div>
 
-    <div class="card" style="margin-top:16px; padding:18px;">
-      <div class="section-heading" style="margin-bottom:10px;">📋 Detected Columns</div>
-      <div style="display:flex; flex-wrap:wrap; gap:7px;">
+    <div class="card preview-card">
+      <div class="section-heading">📋 Detected Columns</div>
+      <div class="detected-columns">
         {% for h in headers %}
-        <span style="background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:3px 10px; font-size:0.78rem; color:var(--accent-light); font-family:monospace;">{{ h }}</span>
+        <span class="detected-column-chip">{{ h }}</span>
         {% endfor %}
       </div>
     </div>
