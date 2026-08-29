@@ -3,70 +3,8 @@
 {% block title %}Transactions{% endblock %}
 
 {% block extra_css %}
-<style>
-  .pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
-    border-top: 1px solid var(--border);
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .pagination-info {
-    font-size: 0.82rem;
-    color: var(--muted);
-    white-space: nowrap;
-  }
-  .pagination-info strong { color: var(--text); }
-  .page-links {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .page-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 34px;
-    height: 34px;
-    padding: 0 8px;
-    border-radius: 7px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    font-family: var(--font-body);
-    text-decoration: none;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    transition: all 0.12s;
-    cursor: pointer;
-  }
-  .page-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--accent); }
-  .page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .page-btn.disabled { opacity: 0.35; pointer-events: none; }
-  .page-ellipsis { color: var(--muted); font-size: 0.82rem; padding: 0 4px; }
-
-  .per-page-select {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 0.8rem;
-    color: var(--muted);
-    white-space: nowrap;
-  }
-  .per-page-select select {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 4px 8px;
-    color: var(--text);
-    font-size: 0.8rem;
-    font-family: var(--font-body);
-    cursor: pointer;
-  }
-  .per-page-select select:focus { outline: none; border-color: var(--accent); }
-</style>
+{% load static %}
+<link rel="stylesheet" href="{% static 'tracker/transactions.css' %}">
 {% endblock %}
 
 {% block content %}

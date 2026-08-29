@@ -2,67 +2,8 @@
 {% block title %}Budgets{% endblock %}
 
 {% block extra_css %}
-<style>
-  .budget-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 16px;
-  }
-
-  .budget-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    transition: border-color 0.15s;
-  }
-  .budget-card:hover { border-color: var(--accent); }
-  .budget-card.over-budget { border-color: rgba(248,113,113,0.5); }
-
-  .budget-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-
-  .budget-amounts {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 8px;
-    font-size: 0.82rem;
-  }
-  .budget-actual { font-weight: 700; font-size: 1.1rem; }
-  .budget-target { color: var(--muted); }
-
-  .progress-track {
-    height: 6px;
-    background: var(--surface2);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 6px;
-  }
-  .progress-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.4s ease;
-  }
-
-  .budget-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 12px;
-  }
-  .budget-status {
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-  .status-ok   { color: var(--green); }
-  .status-warn { color: #fbbf24; }
-  .status-over { color: var(--red); }
-</style>
+{% load static %}
+<link rel="stylesheet" href="{% static 'tracker/budget.css' %}">
 {% endblock %}
 
 {% block content %}

@@ -2,37 +2,8 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block extra_css %}
-<style>
-  .preview-panel {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    margin-top: 20px;
-  }
-  .preview-panel h3 {
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 12px;
-  }
-  .preview-match {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.85rem;
-  }
-  .preview-match:last-child { border-bottom: none; }
-  .preview-match .match-icon { color: var(--green); flex-shrink: 0; }
-  .preview-match .desc { color: var(--text); flex: 1; }
-  .preview-match .cat { font-size: 0.75rem; color: var(--muted); }
-  .no-matches { color: var(--muted); font-size: 0.83rem; font-style: italic; }
-  #match-count { font-weight: 700; color: var(--accent-light); }
-</style>
+{% load static %}
+<link rel="stylesheet" href="{% static 'tracker/rules.css' %}">
 {% endblock %}
 
 {% block content %}
