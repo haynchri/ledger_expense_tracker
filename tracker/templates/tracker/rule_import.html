@@ -59,19 +59,4 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-const input = document.getElementById('csv-file-input');
-const zone  = document.getElementById('upload-zone');
-const label = document.getElementById('file-chosen');
-input.addEventListener('change', () => {
-  if (input.files.length) { label.textContent = '📄 ' + input.files[0].name; label.style.display = 'block'; zone.style.borderColor = 'var(--accent)'; }
-});
-zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
-zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-zone.addEventListener('drop', e => {
-  e.preventDefault(); zone.classList.remove('dragover');
-  if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; label.textContent = '📄 ' + e.dataTransfer.files[0].name; label.style.display = 'block'; zone.style.borderColor = 'var(--accent)'; }
-});
-</script>
-{% endblock %}
+{% block extra_js %}{% endblock %}

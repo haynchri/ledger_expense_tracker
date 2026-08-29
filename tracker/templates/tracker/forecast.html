@@ -51,7 +51,7 @@
       <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:3px;background:var(--accent-light);display:inline-block;border-radius:2px;border-style:dashed;"></span> Balance</span>
     </div>
   </div>
-  <canvas id="forecastChart" height="90"></canvas>
+  <canvas id="forecastChart" height="90" data-chart-data='{{ chart_data_json|safe }}'></canvas>
 </div>
 
 <!-- Month tabs -->
@@ -249,80 +249,4 @@
 {% endif %}
 {% endblock %}
 
-{% block extra_js %}
-{% if has_data %}
-<script>
-const cd = {{ chart_data_json|safe }};
-
-// Grouped bar chart for income/expense + line for running balance
-const ctx = document.getElementById('forecastChart').getContext('2d');
-new Chart(ctx, {
-  data: {
-    labels: cd.labels,
-    datasets: [
-      {
-        type: 'bar',
-        label: 'Income',
-        data: cd.income,
-        backgroundColor: 'rgba(52,211,153,0.45)',
-        borderColor: '#34d399',
-        borderWidth: 1,
-        borderRadius: 4,
-        yAxisID: 'y',
-      },
-      {
-        type: 'bar',
-        label: 'Expenses',
-        data: cd.expense,
-        backgroundColor: 'rgba(248,113,113,0.45)',
-        borderColor: '#f87171',
-        borderWidth: 1,
-        borderRadius: 4,
-        yAxisID: 'y',
-      },
-      {
-        type: 'line',
-        label: 'Running Balance',
-        data: cd.balance,
-        borderColor: '#a599ff',
-        borderWidth: 2,
-        borderDash: [5, 3],
-        pointBackgroundColor: '#a599ff',
-        pointRadius: 4,
-        tension: 0.35,
-        fill: false,
-        yAxisID: 'y2',
-      },
-    ],
-  },
-  options: {
-    responsive: true,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: { labels: { color: '#8b90b0', font: { family: 'DM Sans', size: 11 } } },
-      tooltip: {
-        callbacks: {
-          label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`
-        }
-      }
-    },
-    scales: {
-      x:  { ticks: { color: '#8b90b0' }, grid: { color: '#2e3350' } },
-      y:  { ticks: { color: '#8b90b0', callback: v => '$' + v.toLocaleString() }, grid: { color: '#2e3350' }, position: 'left' },
-      y2: { ticks: { color: '#a599ff', callback: v => '$' + v.toLocaleString() }, grid: { drawOnChartArea: false }, position: 'right' },
-    },
-  },
-});
-
-// Tab switching
-document.getElementById('month-tabs').addEventListener('click', e => {
-  const tab = e.target.closest('.month-tab');
-  if (!tab) return;
-  document.querySelectorAll('.month-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.month-panel').forEach(p => p.classList.remove('active'));
-  tab.classList.add('active');
-  document.getElementById(tab.dataset.panel).classList.add('active');
-});
-</script>
-{% endif %}
-{% endblock %}
+{% block extra_js %}{% endblock %}

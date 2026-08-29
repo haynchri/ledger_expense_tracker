@@ -73,7 +73,7 @@
 
   <!-- Live preview panel -->
   <div>
-    <div class="preview-panel">
+    <div class="preview-panel" data-descriptions='{{ descriptions_json|safe }}'>
       <h3>Live Preview — <span id="match-count">0</span> matches</h3>
       <div id="preview-list">
         <div class="no-matches">Enter a keyword to see matching transactions.</div>
@@ -93,68 +93,4 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-// Fetch recent transaction descriptions for live preview
-const allDescriptions = {{ descriptions_json|safe }};
-
-function escapeRegex(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function testRule(keyword, matchType, description) {
-  if (!keyword) return false;
-  const desc = description.toLowerCase();
-  const kw   = keyword.toLowerCase();
-  switch (matchType) {
-    case 'contains':   return desc.includes(kw);
-    case 'exact':      return desc === kw;
-    case 'startswith': return desc.startsWith(kw);
-    case 'endswith':   return desc.endsWith(kw);
-    case 'regex':
-      try { return new RegExp(keyword, 'i').test(description); }
-      catch { return false; }
-  }
-  return false;
-}
-
-function updatePreview() {
-  const keyword   = document.getElementById('id_keyword').value.trim();
-  const matchType = document.getElementById('id_match_type').value;
-  const list      = document.getElementById('preview-list');
-  const countEl   = document.getElementById('match-count');
-
-  if (!keyword) {
-    list.innerHTML = '<div class="no-matches">Enter a keyword to see matching transactions.</div>';
-    countEl.textContent = '0';
-    return;
-  }
-
-  const matches = allDescriptions.filter(d => testRule(keyword, matchType, d));
-  // Dedupe
-  const unique = [...new Set(matches)].slice(0, 8);
-  countEl.textContent = matches.length;
-
-  if (unique.length === 0) {
-    list.innerHTML = '<div class="no-matches">No existing transactions match this rule.</div>';
-    return;
-  }
-
-  list.innerHTML = unique.map(d => `
-    <div class="preview-match">
-      <span class="match-icon">✓</span>
-      <span class="desc">${d}</span>
-    </div>
-  `).join('');
-
-  if (matches.length > 8) {
-    list.innerHTML += `<div style="font-size:0.75rem; color:var(--muted); margin-top:6px;">…and ${matches.length - 8} more</div>`;
-  }
-}
-
-document.getElementById('id_keyword').addEventListener('input', updatePreview);
-document.getElementById('id_match_type').addEventListener('change', updatePreview);
-// Run once on load in case form is pre-filled (edit mode)
-updatePreview();
-</script>
-{% endblock %}
+{% block extra_js %}{% endblock %}
