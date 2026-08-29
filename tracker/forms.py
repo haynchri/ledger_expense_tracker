@@ -1,5 +1,5 @@
 from django import forms
-from .models import Account, Category, Transaction
+from .models import Account, Category, Statement, Transaction
 
 
 class AccountForm(forms.ModelForm):
@@ -32,11 +32,12 @@ class CategoryForm(forms.ModelForm):
 class TransactionForm(forms.ModelForm):
     class Meta:
         model = Transaction
-        fields = ['transaction_type', 'account', 'category', 'amount', 'description', 'date', 'notes', 'receipt', 'recurring_period']
+        fields = ['transaction_type', 'account', 'category', 'statement', 'amount', 'description', 'date', 'notes', 'receipt', 'recurring_period']
         widgets = {
             'transaction_type': forms.Select(attrs={'class': 'form-input'}),
             'account': forms.Select(attrs={'class': 'form-input'}),
             'category': forms.Select(attrs={'class': 'form-input'}),
+            'statement': forms.Select(attrs={'class': 'form-input'}),
             'amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '0.01'}),
             'description': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'What was this for?'}),
             'date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
@@ -49,7 +50,12 @@ class TransactionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['account'].queryset = Account.objects.filter(user=user, is_active=True)
         self.fields['category'].queryset = Category.objects.filter(user=user)
+        self.fields['statement'].queryset = Statement.objects.filter(user=user).select_related('account')
+        self.fields['statement'].label_from_instance = (
+            lambda statement: statement.description or str(statement)
+        )
         self.fields['category'].required = False
+        self.fields['statement'].required = False
 
 
 class TransactionFilterForm(forms.Form):
