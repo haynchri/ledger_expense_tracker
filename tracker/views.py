@@ -159,12 +159,12 @@ def dashboard_chart_data(request):
         except (ValueError, Category.DoesNotExist):
             return HttpResponse(json.dumps({'error': 'Invalid category'}), 
                               content_type='application/json', status=400)
-    
+
     chart_data = _get_monthly_chart_data(request.user, months=6, category_id=category_id)
     return HttpResponse(json.dumps(chart_data), content_type='application/json')
 
 
-# ── Accounts ──────────────────────────────────────────────────────────────────
+# ── Accounts ─────────────────────────────────────────────────────────────────
 
 @login_required
 def account_list(request):
@@ -224,7 +224,7 @@ def account_detail(request, pk):
     })
 
 
-# ── Categories ────────────────────────────────────────────────────────────────
+# ── Categories ───────────────────────────────────────────────────────────────
 
 @login_required
 def category_list(request):
@@ -288,7 +288,7 @@ def category_delete(request, pk):
     return render(request, 'tracker/confirm_delete.html', {'obj': category, 'type': 'Category'})
 
 
-# ── Transactions ──────────────────────────────────────────────────────────────
+# ── Transactions ─────────────────────────────────────────────────────────────
 
 @login_required
 def transaction_list(request):
@@ -420,7 +420,7 @@ def transaction_delete(request, pk):
     return render(request, 'tracker/confirm_delete.html', {'obj': txn, 'type': 'Transaction'})
 
 
-# ── CSV Import / Export ───────────────────────────────────────────────────────
+# ── CSV Import / Export ──────────────────────────────────────────────────────
 
 @login_required
 def csv_export(request):
@@ -653,7 +653,7 @@ def _parse_date(raw):
             continue
     return None
 
-# ── Reports ───────────────────────────────────────────────────────────────────
+# ── Reports ──────────────────────────────────────────────────────────────────
 
 @login_required
 def reports(request):
@@ -683,8 +683,12 @@ def reports(request):
     by_account = txns.values(
         'account__name', 'account__color', 'account__account_type'
     ).annotate(
-        income=Sum('amount', filter=Q(transaction_type='income')),
-        expense=Sum('amount', filter=Q(transaction_type='expense')),
+        income=Sum('amount', filter=Q(transaction_type='income'), default=0),
+        expense=Sum('amount', filter=Q(transaction_type='expense'), default=0),
+        net=(
+            Sum('amount', filter=Q(transaction_type='income'), default=0)
+            - Sum('amount', filter=Q(transaction_type='expense'), default=0)
+        ),
     )
 
     # Month nav
@@ -711,7 +715,7 @@ def reports(request):
         'chart_data_json': json.dumps(chart_data),
     })
 
-# ── Category Rules ────────────────────────────────────────────────────────────
+# ── Category Rules ───────────────────────────────────────────────────────────
 
 @login_required
 def rule_list(request):
@@ -993,7 +997,7 @@ def rule_import_map(request):
         'rule_import_fields': RULE_IMPORT_FIELDS,
     })
 
-# ── Budgets ───────────────────────────────────────────────────────────────────
+# ── Budgets ──────────────────────────────────────────────────────────────────
 
 @login_required
 def budget_list(request):
@@ -1092,7 +1096,7 @@ def budget_delete(request, pk):
     return render(request, 'tracker/confirm_delete.html', {'obj': budget, 'type': 'Budget'})
 
 
-# ── Forecast ──────────────────────────────────────────────────────────────────
+# ── Forecast ─────────────────────────────────────────────────────────────────
 
 @login_required
 def forecast(request):

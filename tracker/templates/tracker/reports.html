@@ -103,7 +103,7 @@
           <td style="text-align:right; color:var(--green);">+${{ row.income|default:0|floatformat:2 }}</td>
           <td style="text-align:right; color:var(--red);">-${{ row.expense|default:0|floatformat:2 }}</td>
           <td style="text-align:right; font-weight:600;">
-            {% with net_row=row.income|default:0 %}
+            {% with net_row=row.net|default:0%}
             ${{ net_row|floatformat:2 }}
             {% endwith %}
           </td>
