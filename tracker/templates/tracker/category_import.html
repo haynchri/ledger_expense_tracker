@@ -1,0 +1,57 @@
+{% extends "tracker/base.html" %}
+{% block title %}Import Categories{% endblock %}
+
+{% block extra_css %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'tracker/csv.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="step-bar">
+  <div class="step active"><div class="step-num">1</div><span>Upload File</span></div>
+  <div class="step-line"></div>
+  <div class="step"><div class="step-num">2</div><span>Map Columns</span></div>
+  <div class="step-line"></div>
+  <div class="step"><div class="step-num">3</div><span>Done</span></div>
+</div>
+
+<div class="page-header import-page-header">
+  <h1 class="page-title">Import Categories</h1>
+  <a href="{% url 'category_list' %}" class="btn btn-ghost">← Cancel</a>
+</div>
+
+<p class="csv-import-intro">
+  Upload a category CSV file and map its columns on the next screen.
+  Existing categories with the same name will be updated.
+</p>
+
+<div class="import-shell">
+  <div class="card">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">CSV File *</label>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" name="csv_file" accept=".csv" id="csv-file-input">
+          <div class="upload-icon">📂</div>
+          <div class="upload-label">Click to browse or drag &amp; drop</div>
+          <div class="upload-hint">Supports .csv files · Exported from the Export button or any custom format</div>
+          <div class="file-chosen hidden-file-chosen" id="file-chosen"></div>
+        </div>
+        {% if form.csv_file.errors %}<div class="csv-form-error">{{ form.csv_file.errors.0 }}</div>{% endif %}
+      </div>
+      <button type="submit" class="btn btn-primary import-button">Next: Map Columns →</button>
+    </form>
+  </div>
+
+  <div class="card import-tips-card">
+    <div class="section-heading">💡 Tips</div>
+    <div class="import-tips-list">
+      <div class="import-tip"><span class="import-tip-check">✓</span> Your CSV must have a <strong>header row</strong>.</div>
+      <div class="import-tip"><span class="import-tip-check">✓</span> Required column: <code class="import-tip-code">name</code></div>
+      <div class="import-tip"><span class="import-tip-check">✓</span> Optional columns: <code class="import-tip-code">category_type</code>, <code class="import-tip-code">icon</code>, <code class="import-tip-code">color</code></div>
+      <div class="import-tip"><span class="import-tip-check">✓</span> Duplicate names update your existing category.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

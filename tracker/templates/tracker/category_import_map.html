@@ -1,0 +1,68 @@
+{% extends "tracker/base.html" %}
+{% load tracker_extras %}
+{% block title %}Map Category Columns{% endblock %}
+
+{% block extra_css %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'tracker/csv.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="step-bar">
+  <div class="step done"><div class="step-num">✓</div><span>Upload File</span></div>
+  <div class="step-line"></div>
+  <div class="step active"><div class="step-num">2</div><span>Map Columns</span></div>
+  <div class="step-line"></div>
+  <div class="step"><div class="step-num">3</div><span>Done</span></div>
+</div>
+
+<div class="page-header subpage-header">
+  <h1 class="page-title">Map Your Category CSV Columns</h1>
+  <a href="{% url 'category_import' %}" class="btn btn-ghost">← Start Over</a>
+</div>
+
+<p class="section-intro">Match each category field to a column in your file. Auto-detected matches are pre-filled.</p>
+
+<div class="csv-mapping-layout">
+  <div>
+    <form method="post" action="{% url 'category_import_map' %}">
+      {% csrf_token %}
+      <div class="section-heading">🗂 Column Mapping</div>
+      <div class="legend">
+        <span><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent);"></span> Required</span>
+        <span><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--muted);"></span> Optional</span>
+      </div>
+
+      {% for key, label, required in category_import_fields %}
+      {% with field=mapping_form|get_field:key %}
+      <div class="map-row {% if field.errors %}map-row-error{% endif %}">
+        <div class="map-grid">
+          <div class="field-label">
+            {% if required %}<span class="required-dot"></span>{% else %}<span class="optional-dot"></span>{% endif %}
+            {{ label }}
+          </div>
+          <div class="arrow-col">→</div>
+          <div class="map-select-wrap">{{ mapping_form|get_field_widget:key }}</div>
+        </div>
+        {% for err in field.errors %}<div class="map-row-err-msg">⚠ {{ err }}</div>{% endfor %}
+      </div>
+      {% endwith %}
+      {% endfor %}
+
+      <div class="form-actions top-gap">
+        <a href="{% url 'category_import' %}" class="btn btn-ghost">← Back</a>
+        <button type="submit" class="btn btn-primary submit-action-wide">✓ Confirm &amp; Import Categories</button>
+      </div>
+    </form>
+  </div>
+
+  <div>
+    <div class="card preview-card">
+      <div class="section-heading">📋 Detected Columns</div>
+      <div class="detected-columns">
+        {% for header in headers %}<span class="detected-column-chip">{{ header }}</span>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -29,6 +29,60 @@ class CategoryForm(forms.ModelForm):
         }
 
 
+class CategoryCSVUploadForm(forms.Form):
+    csv_file = forms.FileField(
+        widget=forms.FileInput(attrs={'class': 'form-input', 'accept': '.csv'}),
+        help_text='Upload a category CSV file to map its columns.'
+    )
+
+
+CATEGORY_IMPORT_FIELDS = [
+    ('name', 'Name', True),
+    ('category_type', 'Type', False),
+    ('icon', 'Icon', False),
+    ('color', 'Color', False),
+]
+
+
+_CATEGORY_SKIP_CHOICE = '__skip__'
+
+
+class CategoryCSVMappingForm(forms.Form):
+    def __init__(self, csv_headers, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        choices = [(_CATEGORY_SKIP_CHOICE, '— skip / not in file —')] + [
+            (header, header) for header in csv_headers
+        ]
+        auto_candidates = {
+            'name': ['name', 'category', 'category name', 'label'],
+            'category_type': ['category_type', 'category type', 'type'],
+            'icon': ['icon', 'emoji', 'symbol'],
+            'color': ['color', 'colour', 'hex'],
+        }
+        lower_map = {header.lower(): header for header in csv_headers}
+
+        for key, label, _ in CATEGORY_IMPORT_FIELDS:
+            initial = _CATEGORY_SKIP_CHOICE
+            for candidate in auto_candidates[key]:
+                if candidate in lower_map:
+                    initial = lower_map[candidate]
+                    break
+            self.fields[f'map_{key}'] = forms.ChoiceField(
+                choices=choices,
+                required=False,
+                label=label,
+                initial=initial,
+                widget=forms.Select(attrs={'class': 'form-input'}),
+            )
+
+    def clean(self):
+        cleaned = super().clean()
+        name_column = cleaned.get('map_name', _CATEGORY_SKIP_CHOICE)
+        if not name_column or name_column == _CATEGORY_SKIP_CHOICE:
+            self.add_error('map_name', 'Required — please map this to a column.')
+        return cleaned
+
+
 class TransactionForm(forms.ModelForm):
     class Meta:
         model = Transaction

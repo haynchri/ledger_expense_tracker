@@ -16,6 +16,9 @@ urlpatterns = [
     # Categories
     path('categories/', views.category_list, name='category_list'),
     path('categories/new/', views.category_create, name='category_create'),
+    path('categories/export/', views.category_export, name='category_export'),
+    path('categories/import/', views.category_import, name='category_import'),
+    path('categories/import/map/', views.category_import_map, name='category_import_map'),
     path('categories/<int:pk>/edit/', views.category_edit, name='category_edit'),
     path('categories/<int:pk>/delete/', views.category_delete, name='category_delete'),
 
