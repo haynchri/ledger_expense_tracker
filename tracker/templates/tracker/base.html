@@ -36,6 +36,9 @@
         <a href="{% url 'transaction_list' %}" class="nav-link {% if 'transaction' in request.resolver_match.url_name %}active{% endif %}">
           <span class="nav-icon">💳</span> Transactions
         </a>
+        <a href="{% url 'reconciliation_list' %}" class="nav-link {% if request.resolver_match.url_name == 'reconciliation_list' %}active{% endif %}">
+          <span class="nav-icon">↔</span> Reconcile
+        </a>
         <a href="{% url 'account_list' %}" class="nav-link {% if 'account' in request.resolver_match.url_name %}active{% endif %}">
           <span class="nav-icon">🏦</span> Accounts
         </a>
@@ -49,7 +52,7 @@
           <span class="nav-icon">⚡</span> Auto-Categorise
         </a>
       </div>
-      <div class="nav-section">
+      {% comment %} <div class="nav-section">
         <div class="nav-label">Data</div>
         <a href="{% url 'csv_import' %}" class="nav-link {% if request.resolver_match.url_name == 'csv_import' %}active{% endif %}">
           <span class="nav-icon">📥</span> Import CSV
@@ -57,7 +60,7 @@
         <a href="{% url 'csv_export' %}" class="nav-link">
           <span class="nav-icon">📤</span> Export CSV
         </a>
-      </div>
+      </div> {% endcomment %}
     </nav>
     <div class="sidebar-footer">
       <div class="user-pill">

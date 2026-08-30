@@ -27,6 +27,7 @@ urlpatterns = [
     path('transactions/new/', views.transaction_create, name='transaction_create'),
     path('transactions/<int:pk>/edit/', views.transaction_edit, name='transaction_edit'),
     path('transactions/<int:pk>/delete/', views.transaction_delete, name='transaction_delete'),
+    path('reconciliation/', views.reconciliation_list, name='reconciliation_list'),
 
     # CSV
     path('import/', views.csv_import, name='csv_import'),

@@ -11,6 +11,7 @@
 <div class="page-header">
   <h1 class="page-title">Transactions</h1>
   <div class="rule-toolbar">
+    <a href="{% url 'csv_import' %}" class="btn btn-ghost">📥 Import</a>
     <a href="{% url 'csv_export' %}?{{ request.GET.urlencode }}" class="btn btn-ghost">📤 Export</a>
     <a href="{% url 'transaction_create' %}" data-modal-url="{% url 'transaction_create' %}" class="btn btn-primary">+ Add Transaction</a>
   </div>
