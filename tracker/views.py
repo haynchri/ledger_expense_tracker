@@ -15,7 +15,8 @@ from django.utils import timezone
 from .models import Account, Category, Transaction, Statement
 from .forms import (
     AccountForm, CategoryForm, TransactionForm,
-    TransactionFilterForm
+    TransactionFilterForm, CategoryCSVUploadForm, CategoryCSVMappingForm,
+    CATEGORY_IMPORT_FIELDS, _CATEGORY_SKIP_CHOICE,
 )
 
 
@@ -230,6 +231,115 @@ def account_detail(request, pk):
 def category_list(request):
     categories = Category.objects.filter(user=request.user)
     return render(request, 'tracker/category_list.html', {'categories': categories})
+
+
+@login_required
+def category_export(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="categories.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['name', 'category_type', 'icon', 'color'])
+    for category in Category.objects.filter(user=request.user):
+        writer.writerow([
+            category.name,
+            category.category_type,
+            category.icon,
+            category.color,
+        ])
+    return response
+
+
+@login_required
+def category_import(request):
+    if request.method == 'POST':
+        form = CategoryCSVUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = form.cleaned_data['csv_file']
+            try:
+                raw = csv_file.read().decode('utf-8-sig')
+            except UnicodeDecodeError:
+                csv_file.seek(0)
+                raw = csv_file.read().decode('latin-1')
+            headers = csv.DictReader(io.StringIO(raw)).fieldnames or []
+            if not headers:
+                form.add_error('csv_file', 'Could not detect any column headers in this file.')
+            else:
+                request.session['category_import'] = {'raw': raw, 'headers': headers}
+                return render(request, 'tracker/category_import_map.html', {
+                    'mapping_form': CategoryCSVMappingForm(headers),
+                    'headers': headers,
+                    'category_import_fields': CATEGORY_IMPORT_FIELDS,
+                })
+    else:
+        form = CategoryCSVUploadForm()
+    return render(request, 'tracker/category_import.html', {'form': form})
+
+
+@login_required
+def category_import_map(request):
+    session_data = request.session.get('category_import')
+    if not session_data:
+        messages.warning(request, 'Import session expired — please start again.')
+        return redirect('category_import')
+
+    headers = session_data['headers']
+    raw = session_data['raw']
+    if request.method == 'POST':
+        mapping_form = CategoryCSVMappingForm(headers, request.POST)
+        if mapping_form.is_valid():
+            column_map = {}
+            for key, _, _ in CATEGORY_IMPORT_FIELDS:
+                value = mapping_form.cleaned_data.get(
+                    f'map_{key}', _CATEGORY_SKIP_CHOICE
+                )
+                column_map[key] = None if value == _CATEGORY_SKIP_CHOICE else value
+
+            created, updated, skipped = 0, 0, 0
+            errors = []
+            for row_number, row in enumerate(
+                csv.DictReader(io.StringIO(raw)), start=2
+            ):
+                name = row.get(column_map['name'], '').strip()
+                if not name:
+                    skipped += 1
+                    errors.append(f'Row {row_number}: Missing category name')
+                    continue
+
+                category_type = row.get(column_map['category_type'], '').strip().lower() if column_map['category_type'] else 'both'
+                if category_type not in {'income', 'expense', 'both'}:
+                    category_type = 'both'
+                icon = row.get(column_map['icon'], '').strip() if column_map['icon'] else '💡'
+                color = row.get(column_map['color'], '').strip() if column_map['color'] else '#6B7280'
+                category, created_flag = Category.objects.update_or_create(
+                    user=request.user,
+                    name=name,
+                    defaults={
+                        'category_type': category_type,
+                        'icon': icon[:5] or '💡',
+                        'color': color[:7] or '#6B7280',
+                    },
+                )
+                if created_flag:
+                    created += 1
+                else:
+                    updated += 1
+
+            del request.session['category_import']
+            messages.success(
+                request,
+                f'Import complete: {created} created, {updated} updated, {skipped} skipped.'
+            )
+            for error in errors[:10]:
+                messages.warning(request, error)
+            return redirect('category_list')
+    else:
+        mapping_form = CategoryCSVMappingForm(headers)
+
+    return render(request, 'tracker/category_import_map.html', {
+        'mapping_form': mapping_form,
+        'headers': headers,
+        'category_import_fields': CATEGORY_IMPORT_FIELDS,
+    })
 
 
 @login_required

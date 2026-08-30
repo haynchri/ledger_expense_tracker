@@ -4,7 +4,11 @@
 {% block content %}
 <div class="page-header">
   <h1 class="page-title">Categories</h1>
-  <a href="{% url 'category_create' %}" class="btn btn-primary">+ Add Category</a>
+  <div class="rule-toolbar">
+    <a href="{% url 'category_import' %}" class="btn btn-ghost">📥 Import</a>
+    <a href="{% url 'category_export' %}" class="btn btn-ghost">📤 Export</a>
+    <a href="{% url 'category_create' %}" class="btn btn-primary">+ Add Category</a>
+  </div>
 </div>
 
 {% if categories %}
