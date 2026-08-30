@@ -5,11 +5,11 @@ from .models import Account, Category, Statement, Transaction
 class AccountForm(forms.ModelForm):
     class Meta:
         model = Account
-        fields = ['name', 'account_type', 'balance', 'credit_limit', 'last_four', 'color']
+        fields = ['name', 'account_type', 'starting_balance', 'credit_limit', 'last_four', 'color']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'e.g. Chase Checking'}),
             'account_type': forms.Select(attrs={'class': 'form-input'}),
-            'balance': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
+            'starting_balance': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
             'credit_limit': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
             'last_four': forms.TextInput(attrs={'class': 'form-input', 'maxlength': '4', 'placeholder': '1234'}),
             'color': forms.TextInput(attrs={'class': 'form-input', 'type': 'color'}),

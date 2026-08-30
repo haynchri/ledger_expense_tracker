@@ -12,7 +12,7 @@ from django.db.models import Sum, Q
 from django.http import HttpResponse
 from django.utils import timezone
 
-from .models import Account, Category, Transaction, Statement
+from .models import Account, Category, Transaction, Statement, Reconciliation
 from .forms import (
     AccountForm, CategoryForm, TransactionForm,
     TransactionFilterForm, CategoryCSVUploadForm, CategoryCSVMappingForm,
@@ -181,6 +181,7 @@ def account_create(request):
             account = form.save(commit=False)
             account.user = request.user
             account.save()
+            account.recalculate_balance()
             messages.success(request, f'Account "{account.name}" created.')
             return redirect('account_list')
     else:
@@ -195,6 +196,7 @@ def account_edit(request, pk):
         form = AccountForm(request.POST, instance=account)
         if form.is_valid():
             form.save()
+            account.recalculate_balance()
             messages.success(request, 'Account updated.')
             return redirect('account_list')
     else:
@@ -425,8 +427,12 @@ def transaction_list(request):
             qs = qs.filter(description__icontains=d['search'])
 
     # Totals apply to the full filtered set, not just the current page
-    total_income = qs.filter(transaction_type='income').aggregate(t=Sum('amount'))['t'] or 0
-    total_expense = qs.filter(transaction_type='expense').aggregate(t=Sum('amount'))['t'] or 0
+    unreconciled_qs = qs.filter(
+        reconciliation_a__isnull=True,
+        reconciliation_b__isnull=True,
+    )
+    total_income = unreconciled_qs.filter(transaction_type='income').aggregate(t=Sum('amount'))['t'] or 0
+    total_expense = unreconciled_qs.filter(transaction_type='expense').aggregate(t=Sum('amount'))['t'] or 0
 
     # Pagination — default 25 rows, user can override with ?per_page=
     try:
@@ -528,6 +534,55 @@ def transaction_delete(request, pk):
     if _is_modal_request(request):
         return render(request, 'tracker/partials/modal_delete.html', {'obj': txn, 'type': 'Transaction', 'action_url': request.path})
     return render(request, 'tracker/confirm_delete.html', {'obj': txn, 'type': 'Transaction'})
+
+
+@login_required
+def reconciliation_list(request):
+    unmatched = Transaction.objects.filter(
+        user=request.user,
+        reconciliation_a__isnull=True,
+        reconciliation_b__isnull=True,
+    ).select_related('account', 'category')
+
+    candidates = []
+    transactions_by_key = {}
+    for txn in unmatched.order_by('id'):
+        key = (txn.amount, txn.transaction_type)
+        opposite_type = 'expense' if txn.transaction_type == 'income' else 'income'
+        for other in transactions_by_key.get((txn.amount, opposite_type), []):
+            if other.account_id != txn.account_id:
+                candidates.append((other, txn))
+        transactions_by_key.setdefault(key, []).append(txn)
+
+    if request.method == 'POST':
+        first_id = request.POST.get('transaction_a')
+        second_id = request.POST.get('transaction_b')
+        first = get_object_or_404(unmatched, pk=first_id)
+        second = get_object_or_404(unmatched, pk=second_id)
+        valid_pair = (
+            first.pk != second.pk
+            and first.account_id != second.account_id
+            and first.amount == second.amount
+            and first.transaction_type != second.transaction_type
+        )
+        if not valid_pair:
+            messages.error(request, 'Those transactions are not a valid reconciliation pair.')
+            return redirect('reconciliation_list')
+
+        reconciled, _ = Category.objects.get_or_create(
+            user=request.user,
+            name='Reconciled',
+            defaults={'category_type': 'both', 'icon': '↔', 'color': '#14B8A6'},
+        )
+        first.category = reconciled
+        second.category = reconciled
+        first.save(update_fields=['category', 'updated_at'])
+        second.save(update_fields=['category', 'updated_at'])
+        Reconciliation.objects.create(transaction_a=first, transaction_b=second)
+        messages.success(request, 'Transactions matched and marked Reconciled.')
+        return redirect('reconciliation_list')
+
+    return render(request, 'tracker/reconciliation_list.html', {'candidates': candidates})
 
 
 # ── CSV Import / Export ──────────────────────────────────────────────────────
@@ -778,7 +833,8 @@ def reports(request):
         month_end = date(year, month + 1, 1) - timedelta(days=1)
 
     txns = Transaction.objects.filter(
-        user=request.user, date__gte=month_start, date__lte=month_end
+        user=request.user, date__gte=month_start, date__lte=month_end,
+        reconciliation_a__isnull=True, reconciliation_b__isnull=True,
     ).select_related('account', 'category')
 
     income_total = txns.filter(transaction_type='income').aggregate(t=Sum('amount'))['t'] or 0
