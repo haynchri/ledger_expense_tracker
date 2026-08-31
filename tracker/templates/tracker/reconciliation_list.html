@@ -1,6 +1,11 @@
 {% extends "tracker/base.html" %}
 {% block title %}Reconcile{% endblock %}
 
+{% block extra_css %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'tracker/reconciliation.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
   <div>
@@ -9,8 +14,17 @@
   </div>
 </div>
 
+<div class="reconciliation-tabs" role="tablist" aria-label="Reconciliation status">
+  <a href="{% url 'reconciliation_list' %}?tab=unmatched" class="reconciliation-tab {% if active_tab == 'unmatched' %}active{% endif %}" role="tab" aria-selected="{% if active_tab == 'unmatched' %}true{% else %}false{% endif %}">
+    Unmatched <span class="reconciliation-tab-count">{{ candidates|length }}</span>
+  </a>
+  <a href="{% url 'reconciliation_list' %}?tab=matched" class="reconciliation-tab {% if active_tab == 'matched' %}active{% endif %}" role="tab" aria-selected="{% if active_tab == 'matched' %}true{% else %}false{% endif %}">
+    Matched <span class="reconciliation-tab-count">{{ matched|length }}</span>
+  </a>
+</div>
+
 <div class="card">
-  {% if candidates %}
+  {% if active_tab == 'unmatched' and candidates %}
   <div class="table-wrap">
     <table>
       <thead>
@@ -59,10 +73,63 @@
       </tbody>
     </table>
   </div>
+  {% elif active_tab == 'matched' and matched %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Account</th>
+          <th>Type</th>
+          <th class="text-right">Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for reconciliation in matched %}
+        <tr>
+          <td class="muted-inline-note">
+            {{ reconciliation.transaction_a.date }}<br>
+            {{ reconciliation.transaction_b.date }}
+          </td>
+          <td>
+            <div>{{ reconciliation.transaction_a.description }}</div>
+            <div>{{ reconciliation.transaction_b.description }}</div>
+          </td>
+          <td>
+            <div class="dashboard-account-pill"><span class="dashboard-account-dot" style="background:{{ reconciliation.transaction_a.account.color }};"></span>{{ reconciliation.transaction_a.account.name }}</div>
+            <div class="dashboard-account-pill"><span class="dashboard-account-dot" style="background:{{ reconciliation.transaction_b.account.color }};"></span>{{ reconciliation.transaction_b.account.name }}</div>
+          </td>
+          <td>
+            <div><span class="badge badge-{{ reconciliation.transaction_a.transaction_type }}">{{ reconciliation.transaction_a.get_transaction_type_display }}</span></div>
+            <div><span class="badge badge-{{ reconciliation.transaction_b.transaction_type }}">{{ reconciliation.transaction_b.get_transaction_type_display }}</span></div>
+          </td>
+          <td class="text-right">
+            <div class="amount-{{ reconciliation.transaction_a.transaction_type }}">{% if reconciliation.transaction_a.transaction_type == 'income' %}+{% else %}−{% endif %}${{ reconciliation.transaction_a.amount|floatformat:2 }}</div>
+            <div class="amount-{{ reconciliation.transaction_b.transaction_type }}">{% if reconciliation.transaction_b.transaction_type == 'income' %}+{% else %}−{% endif %}${{ reconciliation.transaction_b.amount|floatformat:2 }}</div>
+          </td>
+          <td class="text-right">
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="unmatch">
+              <input type="hidden" name="reconciliation_id" value="{{ reconciliation.pk }}">
+              <button type="submit" class="btn btn-danger btn-sm">Unmatch</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   {% else %}
   <div class="empty-state">
     <div class="empty-icon">↔</div>
+    {% if active_tab == 'matched' %}
+    <p>No matched transactions yet.</p>
+    {% else %}
     <p>No unmatched transactions with equal opposite amounts.</p>
+    {% endif %}
   </div>
   {% endif %}
 </div>

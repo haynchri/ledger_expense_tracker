@@ -4,6 +4,7 @@ import json
 from decimal import Decimal, InvalidOperation
 from datetime import date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
@@ -538,6 +539,26 @@ def transaction_delete(request, pk):
 
 @login_required
 def reconciliation_list(request):
+    active_tab = request.GET.get('tab', 'unmatched')
+    if active_tab not in {'unmatched', 'matched'}:
+        active_tab = 'unmatched'
+
+    matched = Reconciliation.objects.filter(
+        transaction_a__user=request.user,
+        transaction_b__user=request.user,
+    ).select_related(
+        'transaction_a__account', 'transaction_a__category',
+        'transaction_b__account', 'transaction_b__category',
+    )
+
+    if request.method == 'POST' and request.POST.get('action') == 'unmatch':
+        reconciliation = get_object_or_404(
+            matched, pk=request.POST.get('reconciliation_id')
+        )
+        reconciliation.delete()
+        messages.success(request, 'Transactions unmatched.')
+        return redirect(f'{reverse("reconciliation_list")}?tab=matched')
+
     unmatched = Transaction.objects.filter(
         user=request.user,
         reconciliation_a__isnull=True,
@@ -582,7 +603,11 @@ def reconciliation_list(request):
         messages.success(request, 'Transactions matched and marked Reconciled.')
         return redirect('reconciliation_list')
 
-    return render(request, 'tracker/reconciliation_list.html', {'candidates': candidates})
+    return render(request, 'tracker/reconciliation_list.html', {
+        'active_tab': active_tab,
+        'candidates': candidates,
+        'matched': matched,
+    })
 
 
 # ── CSV Import / Export ──────────────────────────────────────────────────────
@@ -1185,6 +1210,8 @@ def budget_list(request):
             category=b.category,
             transaction_type=txn_type,
             date__gte=month_start,
+            reconciliation_a__isnull=True,
+            reconciliation_b__isnull=True,
         ).aggregate(t=Sum('amount'))['t'] or Decimal('0.00')
         pct = int(actual / b.amount * 100) if b.amount else 0
         budget_rows.append({
