@@ -1,0 +1,36 @@
+.reconciliation-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.reconciliation-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.reconciliation-tab:hover,
+.reconciliation-tab.active {
+  color: var(--accent-light);
+}
+
+.reconciliation-tab.active {
+  border-bottom-color: var(--accent);
+}
+
+.reconciliation-tab-count {
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: var(--surface2);
+  font-size: 0.7rem;
+  text-align: center;
+}

@@ -55,13 +55,32 @@ class ReconciliationTests(TestCase):
         self.assertEqual(expense.category_id, reconciled.pk)
         self.assertEqual(income.category_id, reconciled.pk)
 
+        matched_tab = self.client.get(
+            reverse('reconciliation_list'), {'tab': 'matched'}
+        )
+        self.assertContains(matched_tab, 'Transfer out')
+        self.assertContains(matched_tab, 'Transfer in')
+        self.assertContains(matched_tab, 'Unmatch')
+
+        response = self.client.post(reverse('reconciliation_list'), {
+            'action': 'unmatch',
+            'reconciliation_id': Reconciliation.objects.get().pk,
+        })
+        self.assertRedirects(
+            response, f"{reverse('reconciliation_list')}?tab=matched"
+        )
+        self.assertEqual(Reconciliation.objects.count(), 0)
+        unmatched_tab = self.client.get(reverse('reconciliation_list'))
+        self.assertContains(unmatched_tab, 'Transfer out')
+        self.assertContains(unmatched_tab, 'Transfer in')
+
         transaction_list = self.client.get(reverse('transaction_list'))
-        self.assertEqual(transaction_list.context['total_income'], Decimal('150'))
-        self.assertEqual(transaction_list.context['total_expense'], Decimal('0'))
+        self.assertEqual(transaction_list.context['total_income'], Decimal('100'))
+        self.assertEqual(transaction_list.context['total_expense'], Decimal('100'))
 
         report = self.client.get(reverse('reports'), {'year': 2026, 'month': 8})
-        self.assertEqual(report.context['income_total'], Decimal('150'))
-        self.assertEqual(report.context['expense_total'], Decimal('0'))
+        self.assertEqual(report.context['income_total'], Decimal('100'))
+        self.assertEqual(report.context['expense_total'], Decimal('100'))
 
     def test_starting_balance_is_the_base_for_account_balance(self):
         account = Account.objects.create(
